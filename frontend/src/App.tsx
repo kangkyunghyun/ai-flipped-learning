@@ -22,22 +22,31 @@ function App() {
 
   // 여러 개의 채팅 세션을 관리 (로컬 스토리지 연동)
   const [chats, setChats] = useState<ChatSession[]>(() => {
-    const savedChats = localStorage.getItem("ai_tutor_chats");
-    return savedChats
-      ? JSON.parse(savedChats)
-      : [{ id: Date.now().toString(), title: "새로운 개념 학습", messages: [] }];
+    try {
+      const savedChats = localStorage.getItem("ai_tutor_chats");
+      return savedChats
+        ? JSON.parse(savedChats)
+        : [{ id: "default", title: "새로운 개념 학습", messages: [] }];
+    } catch (error) {
+      console.error("로컬 스토리지 데이터 파싱 오류:", error);
+      return [{ id: "default", title: "새로운 개념 학습", messages: [] }];
+    }
   });
 
   const [currentChatId, setCurrentChatId] = useState<string>(() => {
-    const savedId = localStorage.getItem("ai_tutor_current_chat_id");
-    const savedChats = localStorage.getItem("ai_tutor_chats");
-    const parsedChats = savedChats
-      ? JSON.parse(savedChats)
-      : [{ id: Date.now().toString(), title: "새로운 개념 학습", messages: [] }];
-      
-    // 저장된 ID가 실제 존재하는 채팅방 ID인지 유효성 검사
-    const isValidId = parsedChats.some((chat: ChatSession) => chat.id === savedId);
-    return isValidId && savedId ? savedId : parsedChats[0].id;
+    try {
+      const savedId = localStorage.getItem("ai_tutor_current_chat_id");
+      const savedChats = localStorage.getItem("ai_tutor_chats");
+      const parsedChats = savedChats
+        ? JSON.parse(savedChats)
+        : [{ id: "default", title: "새로운 개념 학습", messages: [] }];
+        
+      // 저장된 ID가 실제 존재하는 채팅방 ID인지 유효성 검사
+      const isValidId = parsedChats.some((chat: ChatSession) => chat.id === savedId);
+      return isValidId && savedId ? savedId : parsedChats[0].id;
+    } catch (error) {
+      return "default";
+    }
   });
 
   const [inputText, setInputText] = useState("");
