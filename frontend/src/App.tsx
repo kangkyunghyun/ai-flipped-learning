@@ -220,11 +220,19 @@ function App() {
 
   const handleSaveEdit = (e: React.KeyboardEvent | React.FocusEvent, id: string) => {
     e.stopPropagation();
-    if (e.type === "keydown" && (e as React.KeyboardEvent).key !== "Enter") return;
+    if (e.type === "keydown") {
+      const key = (e as React.KeyboardEvent).key;
+      if (key === "Escape") {
+        setEditingChatId(null);
+        return;
+      }
+      if (key !== "Enter") return;
+    }
 
-    if (editingTitle.trim()) {
+    const trimmedTitle = editingTitle.trim();
+    if (trimmedTitle) {
       setChats((prev) =>
-        prev.map((chat) => (chat.id === id ? { ...chat, title: editingTitle.trim() } : chat))
+        prev.map((chat) => (chat.id === id && chat.title !== trimmedTitle ? { ...chat, title: trimmedTitle } : chat))
       );
     }
     setEditingChatId(null);
