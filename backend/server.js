@@ -16,7 +16,11 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Gemini API 초기화 (환경 변수에서 API 키 로드)
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const geminiApiKey = process.env.GEMINI_API_KEY;
+if (!geminiApiKey) {
+  throw new Error("GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.");
+}
+const genAI = new GoogleGenerativeAI(geminiApiKey);
 const aiModel = genAI.getGenerativeModel({
   model: "gemini-3.1-flash-lite-preview", // 현재 프리뷰(Preview) 상태인 정확한 모델명으로 수정
   systemInstruction:
