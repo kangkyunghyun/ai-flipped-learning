@@ -59,6 +59,8 @@ function App() {
   });
   const [inputText, setInputText] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 현재 활성화된 채팅방 객체 찾기
@@ -195,6 +197,41 @@ function App() {
     }
   };
 
+  const handleDeleteChat = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (chats.length <= 1) {
+      alert("최소 1개의 대화방은 유지되어야 합니다.");
+      return;
+    }
+    if (!window.confirm("정말 이 대화를 삭제하시겠습니까?")) return;
+
+    setChats((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      if (currentChatId === id) {
+        setCurrentChatId(updated[0].id);
+      }
+      return updated;
+    });
+  };
+
+  const handleStartEdit = (e: React.MouseEvent, id: string, title: string) => {
+    e.stopPropagation();
+    setEditingChatId(id);
+    setEditingTitle(title);
+  };
+
+  const handleSaveEdit = (e: React.KeyboardEvent | React.FocusEvent, id: string) => {
+    e.stopPropagation();
+    if (e.type === "keydown" && (e as React.KeyboardEvent).key !== "Enter") return;
+
+    if (editingTitle.trim()) {
+      setChats((prev) =>
+        prev.map((chat) => (chat.id === id ? { ...chat, title: editingTitle.trim() } : chat))
+      );
+    }
+    setEditingChatId(null);
+  };
+
   return (
     <div className="app-layout">
       {/* 왼쪽 사이드바 (Gemini 스타일) */}
@@ -210,7 +247,39 @@ function App() {
               className={`chat-list-item ${chat.id === currentChatId ? "active" : ""}`}
               onClick={() => setCurrentChatId(chat.id)}
             >
-              💬 {chat.title}
+              <div className="chat-title-container">
+                💬{" "}
+                {editingChatId === chat.id ? (
+                  <input
+                    type="text"
+                    className="chat-edit-input"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onKeyDown={(e) => handleSaveEdit(e, chat.id)}
+                    onBlur={(e) => handleSaveEdit(e, chat.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    autoFocus
+                  />
+                ) : (
+                  <span className="chat-title-text">{chat.title}</span>
+                )}
+              </div>
+              <div className="chat-actions">
+                <button
+                  className="action-btn edit-btn"
+                  onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
+                  title="이름 변경"
+                >
+                  ✏️
+                </button>
+                <button
+                  className="action-btn delete-btn"
+                  onClick={(e) => handleDeleteChat(e, chat.id)}
+                  title="삭제"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           ))}
         </div>
