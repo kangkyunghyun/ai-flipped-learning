@@ -66,11 +66,20 @@ function App() {
 
   // 상태가 변경될 때마다 로컬 스토리지에 저장
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_CHATS, JSON.stringify(chats));
+    try {
+      localStorage.setItem(STORAGE_KEY_CHATS, JSON.stringify(chats));
+    } catch (error) {
+      console.error("로컬 스토리지 채팅 데이터 저장 실패 (용량 초과 등):", error);
+      alert("저장 공간이 부족하여 대화 기록을 저장하지 못했습니다. 불필요한 데이터를 지워주세요.");
+    }
   }, [chats]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_CURRENT_CHAT_ID, currentChatId);
+    try {
+      localStorage.setItem(STORAGE_KEY_CURRENT_CHAT_ID, currentChatId);
+    } catch (error) {
+      console.error("로컬 스토리지 현재 채팅 ID 저장 실패:", error);
+    }
   }, [currentChatId]);
 
   useEffect(() => {
