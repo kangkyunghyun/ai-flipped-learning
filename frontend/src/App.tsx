@@ -106,7 +106,7 @@ function App() {
       const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: inputText, history }),
+        body: JSON.stringify({ message: userText, history }),
       });
 
       if (!response.ok) throw new Error("채팅 요청 실패");

@@ -1,9 +1,13 @@
-html, body, #root {
+html,
+body,
+#root {
   margin: 0 auto;
   padding: 0;
   height: 100%;
   width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
   background-color: #fff;
 }
 
@@ -145,8 +149,15 @@ html, body, #root {
   border-bottom: 1px solid #eee;
 }
 
-.chat-header h2 { margin: 0 0 5px 0; font-size: 20px; }
-.chat-header p { margin: 0; color: #666; font-size: 14px; }
+.chat-header h2 {
+  margin: 0 0 5px 0;
+  font-size: 20px;
+}
+.chat-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
 
 /* 채팅 UI 스타일 */
 .chat-container {
@@ -206,11 +217,24 @@ html, body, #root {
 }
 
 /* 마크다운 스타일링 */
-.message-bubble p { margin: 0 0 10px 0; }
-.message-bubble p:last-child { margin: 0; }
-.message-bubble strong { font-weight: 600; color: #111; }
-.message-bubble ul, .message-bubble ol { margin: 10px 0; padding-left: 20px; }
-.message-bubble li { margin-bottom: 5px; }
+.message-bubble p {
+  margin: 0 0 10px 0;
+}
+.message-bubble p:last-child {
+  margin: 0;
+}
+.message-bubble strong {
+  font-weight: 600;
+  color: #111;
+}
+.message-bubble ul,
+.message-bubble ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+.message-bubble li {
+  margin-bottom: 5px;
+}
 
 .message-bubble code {
   background-color: #f1f3f4;
@@ -281,5 +305,4 @@ html, body, #root {
 .chat-input-area button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
-}
 }
