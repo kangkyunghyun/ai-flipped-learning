@@ -14,24 +14,73 @@ type ChatSession = {
   messages: Message[];
 };
 
+const STORAGE_KEY_CHATS = "ai_tutor_chats";
+const STORAGE_KEY_CURRENT_CHAT_ID = "ai_tutor_current_chat_id";
+const DEFAULT_CHAT: ChatSession = { id: "default", title: "새로운 개념 학습", messages: [] };
+
 function App() {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading",
   );
 
-  // 여러 개의 채팅 세션을 관리
-  const [chats, setChats] = useState<ChatSession[]>([
-    { id: Date.now().toString(), title: "새로운 개념 학습", messages: [] },
-  ]);
-  const [currentChatId, setCurrentChatId] = useState<string>(chats[0].id);
+  // 여러 개의 채팅 세션을 관리 (로컬 스토리지 연동)
+  const [chats, setChats] = useState<ChatSession[]>(() => {
+    try {
+      const savedChats = localStorage.getItem(STORAGE_KEY_CHATS);
+      if (savedChats) {
+        const parsed = JSON.parse(savedChats);
+        // 배열이면서 최소 1개 이상의 데이터가 있는지 확인 (방어 코드)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // 데이터 구조 검증: 필수 필드(id, messages) 존재 여부 확인
+          const isValid = parsed.every(
+            (chat: any) => chat?.id && Array.isArray(chat?.messages)
+          );
+          if (isValid) return parsed;
+        }
+      }
+      return [DEFAULT_CHAT];
+    } catch (error) {
+      console.error("로컬 스토리지 데이터 파싱 오류:", error);
+      return [DEFAULT_CHAT];
+    }
+  });
 
+  const [currentChatId, setCurrentChatId] = useState<string>(() => {
+    try {
+      const savedId = localStorage.getItem(STORAGE_KEY_CURRENT_CHAT_ID);
+      // 이미 파싱된 chats 상태를 활용하여 중복 파싱 제거
+      const isValidId = chats.some((chat: ChatSession) => chat.id === savedId);
+      // chats가 비어있을 경우를 대비한 방어 코드 추가 (DEFAULT_CHAT.id로 폴백)
+      return isValidId && savedId ? savedId : (chats.length > 0 ? chats[0].id : DEFAULT_CHAT.id);
+    } catch (error) {
+      return DEFAULT_CHAT.id;
+    }
+  });
   const [inputText, setInputText] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 현재 활성화된 채팅방 객체 찾기
   const currentChat = chats.find((c) => c.id === currentChatId) || chats[0];
+
+  // 상태가 변경될 때마다 로컬 스토리지에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CHATS, JSON.stringify(chats));
+    } catch (error) {
+      console.error("로컬 스토리지 채팅 데이터 저장 실패 (용량 초과 등):", error);
+      alert("저장 공간이 부족하여 대화 기록을 저장하지 못했습니다. 불필요한 데이터를 지워주세요.");
+    }
+  }, [chats]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CURRENT_CHAT_ID, currentChatId);
+    } catch (error) {
+      console.error("로컬 스토리지 현재 채팅 ID 저장 실패:", error);
+    }
+  }, [currentChatId]);
 
   useEffect(() => {
     const controller = new AbortController();
