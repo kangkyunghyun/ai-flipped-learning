@@ -14,6 +14,10 @@ type ChatSession = {
   messages: Message[];
 };
 
+const STORAGE_KEY_CHATS = "ai_tutor_chats";
+const STORAGE_KEY_CURRENT_CHAT_ID = "ai_tutor_current_chat_id";
+const DEFAULT_CHAT: ChatSession = { id: "default", title: "새로운 개념 학습", messages: [] };
+
 function App() {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -23,23 +27,33 @@ function App() {
   // 여러 개의 채팅 세션을 관리 (로컬 스토리지 연동)
   const [chats, setChats] = useState<ChatSession[]>(() => {
     try {
-      const savedChats = localStorage.getItem("ai_tutor_chats");
-      return savedChats
-        ? JSON.parse(savedChats)
-        : [{ id: "default", title: "새로운 개념 학습", messages: [] }];
+      const savedChats = localStorage.getItem(STORAGE_KEY_CHATS);
+      if (savedChats) {
+        const parsed = JSON.parse(savedChats);
+        // 배열이면서 최소 1개 이상의 데이터가 있는지 확인 (방어 코드)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+      return [DEFAULT_CHAT];
     } catch (error) {
       console.error("로컬 스토리지 데이터 파싱 오류:", error);
-      return [{ id: "default", title: "새로운 개념 학습", messages: [] }];
+      return [DEFAULT_CHAT];
     }
   });
 
   const [currentChatId, setCurrentChatId] = useState<string>(() => {
     try {
-      const savedId = localStorage.getItem("ai_tutor_current_chat_id");
-      const savedChats = localStorage.getItem("ai_tutor_chats");
-      const parsedChats = savedChats
-        ? JSON.parse(savedChats)
-        : [{ id: "default", title: "새로운 개념 학습", messages: [] }];
+      const savedId = localStorage.getItem(STORAGE_KEY_CURRENT_CHAT_ID);
+      const savedChats = localStorage.getItem(STORAGE_KEY_CHATS);
+      let parsedChats = [DEFAULT_CHAT];
+
+      if (savedChats) {
+        const parsed = JSON.parse(savedChats);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          parsedChats = parsed;
+        }
+      }
         
       // 저장된 ID가 실제 존재하는 채팅방 ID인지 유효성 검사
       const isValidId = parsedChats.some((chat: ChatSession) => chat.id === savedId);
@@ -58,11 +72,11 @@ function App() {
 
   // 상태가 변경될 때마다 로컬 스토리지에 저장
   useEffect(() => {
-    localStorage.setItem("ai_tutor_chats", JSON.stringify(chats));
+    localStorage.setItem(STORAGE_KEY_CHATS, JSON.stringify(chats));
   }, [chats]);
 
   useEffect(() => {
-    localStorage.setItem("ai_tutor_current_chat_id", currentChatId);
+    localStorage.setItem(STORAGE_KEY_CURRENT_CHAT_ID, currentChatId);
   }, [currentChatId]);
 
   useEffect(() => {
