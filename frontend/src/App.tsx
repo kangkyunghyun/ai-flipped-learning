@@ -45,24 +45,14 @@ function App() {
   const [currentChatId, setCurrentChatId] = useState<string>(() => {
     try {
       const savedId = localStorage.getItem(STORAGE_KEY_CURRENT_CHAT_ID);
-      const savedChats = localStorage.getItem(STORAGE_KEY_CHATS);
-      let parsedChats = [DEFAULT_CHAT];
-
-      if (savedChats) {
-        const parsed = JSON.parse(savedChats);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          parsedChats = parsed;
-        }
-      }
-        
-      // 저장된 ID가 실제 존재하는 채팅방 ID인지 유효성 검사
-      const isValidId = parsedChats.some((chat: ChatSession) => chat.id === savedId);
-      return isValidId && savedId ? savedId : parsedChats[0].id;
+      // 이미 파싱된 chats 상태를 활용하여 중복 파싱 제거
+      const isValidId = chats.some((chat: ChatSession) => chat.id === savedId);
+      // chats가 비어있을 경우를 대비한 방어 코드 추가 (DEFAULT_CHAT.id로 폴백)
+      return isValidId && savedId ? savedId : (chats.length > 0 ? chats[0].id : DEFAULT_CHAT.id);
     } catch (error) {
-      return "default";
+      return DEFAULT_CHAT.id;
     }
   });
-
   const [inputText, setInputText] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
