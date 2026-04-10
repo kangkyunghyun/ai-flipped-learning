@@ -8,7 +8,10 @@ function App() {
     fetch(
       (import.meta.env.VITE_API_URL || "http://localhost:5001") + "/api/health",
     )
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("서버 응답 에러");
+        return res.json();
+      })
       .then((data) => setMessage(data.message))
       .catch((err) => {
         console.error(err);
