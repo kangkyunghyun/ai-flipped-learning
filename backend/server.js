@@ -30,7 +30,10 @@ app.get("/api/health", (req, res) => {
 
 // 전역 에러 핸들러
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  if (res.headersSent) {
+    return next(err);
+  }
+  console.error(err.stack || err);
   res.status(500).json({ message: "서버에서 오류가 발생했습니다." });
 });
 

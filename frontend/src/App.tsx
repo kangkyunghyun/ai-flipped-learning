@@ -11,10 +11,10 @@ function App() {
     const controller = new AbortController();
 
     // 백엔드 통신 테스트
-    fetch(
-      (import.meta.env.VITE_API_URL || "http://localhost:5001") + "/api/health",
-      { signal: controller.signal },
-    )
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5001";
+    fetch(`${apiUrl.replace(/\/$/, "")}/api/health`, {
+      signal: controller.signal,
+    })
       .then((res) => {
         if (!res.ok) throw new Error("서버 응답 에러");
         return res.json();
