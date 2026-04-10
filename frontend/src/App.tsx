@@ -32,7 +32,11 @@ function App() {
         const parsed = JSON.parse(savedChats);
         // 배열이면서 최소 1개 이상의 데이터가 있는지 확인 (방어 코드)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // 데이터 구조 검증: 필수 필드(id, messages) 존재 여부 확인
+          const isValid = parsed.every(
+            (chat: any) => chat?.id && Array.isArray(chat?.messages)
+          );
+          if (isValid) return parsed;
         }
       }
       return [DEFAULT_CHAT];
