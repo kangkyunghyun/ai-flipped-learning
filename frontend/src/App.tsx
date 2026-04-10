@@ -20,11 +20,25 @@ function App() {
     "loading",
   );
 
-  // 여러 개의 채팅 세션을 관리
-  const [chats, setChats] = useState<ChatSession[]>([
-    { id: Date.now().toString(), title: "새로운 개념 학습", messages: [] },
-  ]);
-  const [currentChatId, setCurrentChatId] = useState<string>(chats[0].id);
+  // 여러 개의 채팅 세션을 관리 (로컬 스토리지 연동)
+  const [chats, setChats] = useState<ChatSession[]>(() => {
+    const savedChats = localStorage.getItem("ai_tutor_chats");
+    return savedChats
+      ? JSON.parse(savedChats)
+      : [{ id: Date.now().toString(), title: "새로운 개념 학습", messages: [] }];
+  });
+
+  const [currentChatId, setCurrentChatId] = useState<string>(() => {
+    const savedId = localStorage.getItem("ai_tutor_current_chat_id");
+    const savedChats = localStorage.getItem("ai_tutor_chats");
+    const parsedChats = savedChats
+      ? JSON.parse(savedChats)
+      : [{ id: Date.now().toString(), title: "새로운 개념 학습", messages: [] }];
+      
+    // 저장된 ID가 실제 존재하는 채팅방 ID인지 유효성 검사
+    const isValidId = parsedChats.some((chat: ChatSession) => chat.id === savedId);
+    return isValidId && savedId ? savedId : parsedChats[0].id;
+  });
 
   const [inputText, setInputText] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -32,6 +46,15 @@ function App() {
 
   // 현재 활성화된 채팅방 객체 찾기
   const currentChat = chats.find((c) => c.id === currentChatId) || chats[0];
+
+  // 상태가 변경될 때마다 로컬 스토리지에 저장
+  useEffect(() => {
+    localStorage.setItem("ai_tutor_chats", JSON.stringify(chats));
+  }, [chats]);
+
+  useEffect(() => {
+    localStorage.setItem("ai_tutor_current_chat_id", currentChatId);
+  }, [currentChatId]);
 
   useEffect(() => {
     const controller = new AbortController();
