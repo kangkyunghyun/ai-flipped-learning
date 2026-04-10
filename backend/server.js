@@ -24,6 +24,12 @@ app.get("/api/health", (req, res) => {
 
 // TODO: "백지상태 AI"와의 대화를 처리할 LLM 연동 엔드포인트 추가 예정
 
+// 전역 에러 핸들러
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "서버에서 오류가 발생했습니다." });
+});
+
 app.listen(PORT, () => {
   console.log(`Backend server is running on port ${PORT}`);
 });

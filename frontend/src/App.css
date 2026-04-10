@@ -40,3 +40,27 @@
 .read-the-docs {
   color: #888;
 }
+
+/* 새로 추가된 스타일 */
+.app-container {
+  padding: 40px;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+.status-box {
+  margin-top: 30px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.status-text-success {
+  color: green;
+  font-weight: bold;
+}
+
+.status-text-error {
+  color: red;
+  font-weight: bold;
+}
