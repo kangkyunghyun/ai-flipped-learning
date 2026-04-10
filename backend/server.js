@@ -4,6 +4,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
+  throw new Error("FRONTEND_URL 환경 변수가 설정되지 않았습니다.");
+}
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 

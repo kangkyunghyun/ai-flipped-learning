@@ -3,6 +3,9 @@ import "./App.css";
 
 function App() {
   const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading",
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -16,11 +19,15 @@ function App() {
         if (!res.ok) throw new Error("서버 응답 에러");
         return res.json();
       })
-      .then((data) => setMessage(data.message))
+      .then((data) => {
+        setMessage(data.message);
+        setStatus("success");
+      })
       .catch((err) => {
         if (err.name === "AbortError") return;
         console.error(err);
         setMessage("백엔드 서버와 연결할 수 없습니다.");
+        setStatus("error");
       });
 
     return () => controller.abort();
@@ -34,9 +41,11 @@ function App() {
         <h3>서버 연결 상태</h3>
         <p
           className={
-            message.includes("성공적")
+            status === "success"
               ? "status-text-success"
-              : "status-text-error"
+              : status === "error"
+                ? "status-text-error"
+                : ""
           }
         >
           {message || "연결 중..."}
