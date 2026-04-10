@@ -205,13 +205,11 @@ function App() {
     }
     if (!window.confirm("정말 이 대화를 삭제하시겠습니까?")) return;
 
-    setChats((prev) => {
-      const updated = prev.filter((c) => c.id !== id);
-      if (currentChatId === id) {
-        setCurrentChatId(updated[0].id);
-      }
-      return updated;
-    });
+    const updated = chats.filter((c) => c.id !== id);
+    setChats(updated);
+    if (currentChatId === id) {
+      setCurrentChatId(updated[0].id);
+    }
   };
 
   const handleStartEdit = (e: React.MouseEvent, id: string, title: string) => {
