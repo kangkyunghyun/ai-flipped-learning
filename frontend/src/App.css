@@ -1,8 +1,14 @@
+html,
+body,
 #root {
-  max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  background-color: #fff;
 }
 
 .logo {
@@ -42,17 +48,82 @@
 }
 
 /* 새로 추가된 스타일 */
-.app-container {
-  padding: 40px;
-  font-family: sans-serif;
-  text-align: center;
+.app-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
 }
 
-.status-box {
-  margin-top: 30px;
+/* 사이드바 스타일 */
+.sidebar {
+  width: 260px;
+  background-color: #f0f4f9;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e1e5ea;
+}
+
+.new-chat-btn {
+  background-color: #fff;
   border: 1px solid #ddd;
+  padding: 12px 16px;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.new-chat-btn:hover {
+  background-color: #e8eaed;
+}
+
+.chat-list {
+  flex: 1;
+  margin-top: 30px;
+  overflow-y: auto;
+}
+
+.list-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 10px;
+  padding-left: 10px;
+}
+
+.chat-list-item {
+  padding: 10px 14px;
+  margin-bottom: 5px;
   border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-list-item:hover {
+  background-color: #e1e5ea;
+}
+
+.chat-list-item.active {
+  background-color: #d3e3fd;
+  color: #001d35;
+  font-weight: 500;
+}
+
+.status-indicator {
+  margin-top: auto;
+  font-size: 12px;
+  text-align: center;
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
 }
 
 .status-text-success {
@@ -63,4 +134,175 @@
 .status-text-error {
   color: red;
   font-weight: bold;
+}
+
+/* 메인 컨텐츠 영역 */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+.chat-header {
+  padding: 20px 40px;
+  border-bottom: 1px solid #eee;
+}
+
+.chat-header h2 {
+  margin: 0 0 5px 0;
+  font-size: 20px;
+}
+.chat-header p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+/* 채팅 UI 스타일 */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-history {
+  flex: 1;
+  padding: 30px 10%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.empty-chat {
+  color: #999;
+  margin: auto;
+  font-weight: 500;
+}
+
+.chat-message {
+  display: flex;
+}
+
+.chat-message.user {
+  justify-content: flex-end;
+}
+
+.chat-message.model {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.chat-message.user .message-bubble {
+  background-color: #e3f2fd;
+  color: #000;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message.model .message-bubble {
+  background-color: #fff;
+  border: 1px solid #e1e5ea;
+  color: #333;
+  border-bottom-left-radius: 4px;
+}
+
+/* 마크다운 스타일링 */
+.message-bubble p {
+  margin: 0 0 10px 0;
+}
+.message-bubble p:last-child {
+  margin: 0;
+}
+.message-bubble strong {
+  font-weight: 600;
+  color: #111;
+}
+.message-bubble ul,
+.message-bubble ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+.message-bubble li {
+  margin-bottom: 5px;
+}
+
+.message-bubble code {
+  background-color: #f1f3f4;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #d32f2f;
+}
+
+.message-bubble pre {
+  background-color: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid #e8eaed;
+}
+
+.message-bubble pre code {
+  background-color: transparent;
+  color: #333;
+  padding: 0;
+}
+
+.message-bubble.loading {
+  color: #777;
+  font-style: italic;
+}
+
+.chat-input-area {
+  display: flex;
+  padding: 15px;
+  background-color: white;
+  border-top: 1px solid #ddd;
+  gap: 10px;
+}
+
+.chat-input-area input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #ccc;
+  border-radius: 24px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input-area input:focus {
+  border-color: #007bff;
+}
+
+.chat-input-area button {
+  padding: 10px 24px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 15px;
+  transition: background-color 0.2s;
+}
+
+.chat-input-area button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.chat-input-area button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
