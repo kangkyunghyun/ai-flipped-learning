@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { systemInstructions } from "./prompts.js";
 
 // 백엔드 폴더 내부의 .env를 먼저 찾고, 없으면 프로젝트 루트(상위) 폴더의 .env를 찾아 로드합니다.
 dotenv.config();
@@ -21,11 +22,18 @@ if (!geminiApiKey) {
   throw new Error("GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.");
 }
 const genAI = new GoogleGenerativeAI(geminiApiKey);
-const aiModel = genAI.getGenerativeModel({
-  model: "gemini-3.1-flash-lite-preview", // 현재 프리뷰(Preview) 상태인 정확한 모델명으로 수정
-  systemInstruction:
-    "너는 아무것도 모르는 백지상태의 학생이야. 사용자는 너에게 특정 개념을 가르쳐주는 선생님이야. 첫 인사로 '나는 암것도 모르는 바보야 우헤헤 나한테 개념을 설명해바'와 같이 말해. 사용자가 무언가를 설명하면 가끔 엉뚱한 오개념을 말하거나, 천진난만하게 꼬리 질문을 던져서 사용자가 더 깊이 고민하고 논리적으로 설명하도록 유도해야 해. 절대 먼저 정답을 말하거나 똑똑하게 행동하지 마.",
-});
+
+// 요청받은 페르소나에 맞춰 모델을 동적으로 생성하는 함수
+const getModel = (persona) => {
+  const systemInstruction = ["naive", "average", "genius"].includes(persona)
+    ? systemInstructions[persona]
+    : systemInstructions.naive;
+
+  return genAI.getGenerativeModel({
+    model: "gemini-3.1-flash-lite-preview",
+    systemInstruction,
+  });
+};
 
 app.use(helmet());
 app.use(
@@ -46,11 +54,13 @@ app.get("/api/health", (req, res) => {
 // 백지상태 AI와의 채팅 엔드포인트
 app.post("/api/chat", async (req, res, next) => {
   try {
-    const { message, history } = req.body;
+    const { message, history, persona } = req.body;
 
     if (!message) {
       return res.status(400).json({ message: "메시지가 비어 있습니다." });
     }
+
+    const aiModel = getModel(persona);
 
     // 이전 대화 기록을 포함하여 채팅 세션 시작
     const chatSession = aiModel.startChat({ history: history || [] });
