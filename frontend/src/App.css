@@ -200,6 +200,11 @@ body {
   animation: fadeIn 0.2s ease;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .chat-list-item:hover .chat-actions,
 .chat-list-item.active .chat-actions {
   display: flex;
@@ -240,6 +245,7 @@ body {
   border-radius: 20px;
   box-shadow: var(--shadow-md);
   overflow: hidden;
+  transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
 .chat-header {
@@ -404,7 +410,7 @@ body {
   line-height: 1.7;
   font-size: 15px;
   font-weight: 600;
-  box-shadow: var(--shadow-solid-sm);
+  box-shadow: var(--shadow-sm);
 }
 
 .chat-message.user .message-bubble {
