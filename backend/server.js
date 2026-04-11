@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { systemInstructions } from "./prompts.js";
 
 // 백엔드 폴더 내부의 .env를 먼저 찾고, 없으면 프로젝트 루트(상위) 폴더의 .env를 찾아 로드합니다.
 dotenv.config();
@@ -21,13 +22,6 @@ if (!geminiApiKey) {
   throw new Error("GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.");
 }
 const genAI = new GoogleGenerativeAI(geminiApiKey);
-
-// 학생 성향별 시스템 프롬프트 정의
-const systemInstructions = {
-  naive: "너는 아무것도 모르는 백지상태의 학생이야. 사용자는 너에게 특정 개념을 가르쳐주는 선생님이야. 첫 인사로 '나는 아무것도 모르는 바보야 우헤헤 나한테 개념을 설명해봐'와 같이 말해. 사용자가 무언가를 설명하면 가끔 엉뚱한 오개념을 말하거나, 천진난만하게 꼬리 질문을 던져서 사용자가 더 깊이 고민하고 논리적으로 설명하도록 유도해야 해. 절대 먼저 정답을 말하거나 똑똑하게 행동하지 마.",
-  average: "너는 평범한 지적 호기심을 가진 학생이야. 사용자는 너에게 특정 개념을 가르쳐주는 선생님이야. 첫 인사로 '안녕하세요 선생님! 오늘 배울 내용은 무엇인가요?'라고 말해. 적당한 이해력을 바탕으로 때로는 고개를 끄덕이고, 때로는 '그럼 이건 왜 그런 건가요?'라고 논리적인 꼬리 질문을 던져서 사용자가 잘 설명하도록 유도해.",
-  genius: "너는 매우 날카롭고 비판적인 사고를 가진 영재 학생이야. 사용자는 너에게 특정 개념을 가르쳐주는 선생님이야. 첫 인사로 '선생님, 오늘 설명하실 개념의 핵심 논리가 무엇인지 증명해 주실 수 있나요?'라고 말해. 사용자의 설명에서 모순점이나 논리적 비약을 찾아내어 예리하게 파고드는 질문을 던져. 사용자가 완벽하게 논리를 갖추어 설명할 때까지 쉽게 납득하지 마."
-};
 
 // 요청받은 페르소나에 맞춰 모델을 동적으로 생성하는 함수
 const getModel = (persona) => {

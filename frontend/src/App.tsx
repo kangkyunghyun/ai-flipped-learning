@@ -334,50 +334,37 @@ function App() {
                   아래에서 학생의 성향을 선택하고 첫 인사를 건네보세요!
                 </p>
                 <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginBottom: "30px" }}>
-                  <button
-                    style={{
-                      padding: "12px 20px",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      border: (currentChat.persona || "naive") === "naive" ? "2px solid #007bff" : "1px solid #ddd",
-                      backgroundColor: (currentChat.persona || "naive") === "naive" ? "#e7f1ff" : "#fff",
-                      fontWeight: (currentChat.persona || "naive") === "naive" ? "bold" : "normal",
-                    }}
-                    onClick={() => updatePersona("naive")}
-                  >
-                    🤪 순진한 바보
-                  </button>
-                  <button
-                    style={{
-                      padding: "12px 20px",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      border: currentChat.persona === "average" ? "2px solid #007bff" : "1px solid #ddd",
-                      backgroundColor: currentChat.persona === "average" ? "#e7f1ff" : "#fff",
-                      fontWeight: currentChat.persona === "average" ? "bold" : "normal",
-                    }}
-                    onClick={() => updatePersona("average")}
-                  >
-                    😐 평범한 학습자
-                  </button>
-                  <button
-                    style={{
-                      padding: "12px 20px",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                      border: currentChat.persona === "genius" ? "2px solid #007bff" : "1px solid #ddd",
-                      backgroundColor: currentChat.persona === "genius" ? "#e7f1ff" : "#fff",
-                      fontWeight: currentChat.persona === "genius" ? "bold" : "normal",
-                    }}
-                    onClick={() => updatePersona("genius")}
-                  >
-                    🤓 날카로운 천재
-                  </button>
+                  {(["naive", "average", "genius"] as const).map((p) => {
+                    const isActive = (currentChat.persona || "naive") === p;
+                    const labels: Record<Persona, string> = {
+                      naive: "🤪 순진한 바보",
+                      average: "😐 평범한 학습자",
+                      genius: "🤓 날카로운 천재",
+                    };
+                    return (
+                      <button
+                        key={p}
+                        style={{
+                          padding: "12px 20px",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          border: isActive ? "2px solid #007bff" : "1px solid #ddd",
+                          backgroundColor: isActive ? "#e7f1ff" : "#fff",
+                          fontWeight: isActive ? "bold" : "normal",
+                        }}
+                        onClick={() => updatePersona(p)}
+                      >
+                        {labels[p]}
+                      </button>
+                    );
+                  })}
                 </div>
                 <p style={{ fontSize: "0.9rem", color: "#888" }}>
-                  {(currentChat.persona || "naive") === "naive" && "엉뚱한 오개념과 질문으로 메타인지를 돕습니다."}
-                  {currentChat.persona === "average" && "적당한 이해력을 바탕으로 논리적인 꼬리 질문을 던집니다."}
-                  {currentChat.persona === "genius" && "논리적 비약을 찾아내고 예리한 질문으로 지적 토론을 주도합니다."}
+                  {{
+                    naive: "엉뚱한 오개념과 질문으로 메타인지를 돕습니다.",
+                    average: "적당한 이해력을 바탕으로 논리적인 꼬리 질문을 던집니다.",
+                    genius: "논리적 비약을 찾아내고 예리한 질문으로 지적 토론을 주도합니다.",
+                  }[currentChat.persona || "naive"]}
                 </p>
               </div>
             )}
