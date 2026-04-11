@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./App.css";
@@ -71,9 +71,12 @@ function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 현재 활성화된 채팅방 객체 찾기
-  const currentChat: ChatSession = currentChatId === "new"
-    ? { id: "new", title: "새로운 개념 학습", messages: [], persona: newChatPersona }
-    : (chats.find((c) => c.id === currentChatId) || { id: "new", title: "새로운 개념 학습", messages: [], persona: newChatPersona });
+  const currentChat: ChatSession = useMemo(() => {
+    if (currentChatId === "new") {
+      return { id: "new", title: "새로운 개념 학습", messages: [], persona: newChatPersona };
+    }
+    return chats.find((c) => c.id === currentChatId) || { id: "new", title: "새로운 개념 학습", messages: [], persona: newChatPersona };
+  }, [currentChatId, newChatPersona, chats]);
 
   // 상태가 변경될 때마다 로컬 스토리지에 저장
   useEffect(() => {
