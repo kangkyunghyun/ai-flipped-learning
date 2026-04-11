@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import "./App.css";
 
 type Message = {
-  role: "user" | "model";
+  role: "user" | "model" | "evaluator";
   text: string;
 };
 
@@ -66,6 +66,7 @@ function App() {
 
   const [inputText, setInputText] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -77,6 +78,8 @@ function App() {
     }
     return chats.find((c) => c.id === currentChatId) || { id: "new", title: "새로운 개념 학습", messages: [], persona: newChatPersona };
   }, [currentChatId, newChatPersona, chats]);
+
+  const isEvaluated = currentChat.messages.some((m) => m.role === "evaluator");
 
   // 상태가 변경될 때마다 로컬 스토리지에 저장
   useEffect(() => {
@@ -126,7 +129,7 @@ function App() {
 
   // 메시지가 추가될 때마다 스크롤을 맨 아래로 부드럽게 이동
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [currentChat.messages, isChatLoading]);
 
   const handleNewChat = () => {
@@ -136,7 +139,7 @@ function App() {
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isEvaluated) return;
 
     const userText = inputText;
     const newUserMessage: Message = { role: "user", text: userText };
@@ -171,7 +174,7 @@ function App() {
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5001";
-      const history = currentChat.messages.map((msg) => ({
+      const history = currentChat.messages.filter(m => m.role !== "evaluator").map((msg) => ({
         role: msg.role,
         parts: [{ text: msg.text }],
       }));
@@ -212,6 +215,47 @@ function App() {
         ),
       );
     } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const handleEvaluate = async () => {
+    if (currentChat.messages.length === 0 || isEvaluated) return;
+    
+    setIsEvaluating(true);
+    setIsChatLoading(true);
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5001";
+      // 이전 대화 내역 포맷팅 (평가 메시지는 제외)
+      const history = currentChat.messages.filter(m => m.role !== "evaluator").map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.text }],
+      }));
+
+      const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/evaluate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history }),
+      });
+
+      if (!response.ok) throw new Error("평가 요청 실패");
+
+      const data = await response.json();
+      const evalMessage: Message = { role: "evaluator", text: data.reply };
+
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === currentChatId
+            ? { ...chat, messages: [...chat.messages, evalMessage] }
+            : chat,
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+      alert("평가 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsEvaluating(false);
       setIsChatLoading(false);
     }
   };
@@ -393,6 +437,15 @@ function App() {
                 </div>
               </div>
             ))}
+
+            {currentChat.messages.length > 0 && !isEvaluated && !isChatLoading && (
+              <div className="evaluate-wrapper">
+                <button className="evaluate-btn" onClick={handleEvaluate} disabled={isEvaluating}>
+                  🎓 학습 종료 및 피드백 받기
+                </button>
+              </div>
+            )}
+
             {isChatLoading && (
               <div className="chat-message model">
                 <div className="message-bubble loading">생각 중... 🤔</div>
@@ -408,13 +461,13 @@ function App() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="선생님, 오늘 배울 개념은 무엇인가요?"
-                disabled={isChatLoading || status !== "success"}
+                placeholder={isEvaluated ? "학습이 종료되었습니다. 새 대화를 시작해주세요." : "선생님, 오늘 배울 개념은 무엇인가요?"}
+                disabled={isChatLoading || status !== "success" || isEvaluated}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={
-                  isChatLoading || !inputText.trim() || status !== "success"
+                  isChatLoading || !inputText.trim() || status !== "success" || isEvaluated
                 }
               >
                 전송

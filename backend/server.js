@@ -3,7 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { systemInstructions } from "./prompts.js";
+import { systemInstructions, evaluatorInstruction } from "./prompts.js";
 
 // 백엔드 폴더 내부의 .env를 먼저 찾고, 없으면 프로젝트 루트(상위) 폴더의 .env를 찾아 로드합니다.
 dotenv.config();
@@ -66,6 +66,33 @@ app.post("/api/chat", async (req, res, next) => {
     const chatSession = aiModel.startChat({ history: history || [] });
 
     const result = await chatSession.sendMessage(message);
+    const responseText = result.response.text();
+
+    res.json({ reply: responseText });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 학습 평가 엔드포인트
+app.post("/api/evaluate", async (req, res, next) => {
+  try {
+    const { history } = req.body;
+
+    if (!history || history.length === 0) {
+      return res.status(400).json({ message: "평가할 대화 내역이 없습니다." });
+    }
+
+    const aiModel = genAI.getGenerativeModel({
+      model: "gemini-3.1-flash-lite-preview",
+      systemInstruction: evaluatorInstruction,
+    });
+
+    // 평가 시에는 history 배열을 하나의 텍스트 대화록으로 묶어서 프롬프트에 주입
+    const conversation = history.map(m => `${m.role === 'user' ? '선생님(사용자)' : '학생(AI)'}: ${m.parts[0].text}`).join('\n\n');
+    const prompt = `다음은 선생님(사용자)과 학생(AI)의 대화 내역이야. 이를 바탕으로 선생님의 가르침을 객관적으로 평가해줘.\n\n[대화 내역]\n${conversation}`;
+
+    const result = await aiModel.generateContent(prompt);
     const responseText = result.response.text();
 
     res.json({ reply: responseText });
