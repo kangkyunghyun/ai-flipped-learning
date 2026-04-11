@@ -31,9 +31,13 @@ const systemInstructions = {
 
 // 요청받은 페르소나에 맞춰 모델을 동적으로 생성하는 함수
 const getModel = (persona) => {
+  const systemInstruction = ["naive", "average", "genius"].includes(persona)
+    ? systemInstructions[persona]
+    : systemInstructions.naive;
+
   return genAI.getGenerativeModel({
     model: "gemini-3.1-flash-lite-preview",
-    systemInstruction: systemInstructions[persona] || systemInstructions.naive,
+    systemInstruction,
   });
 };
 
