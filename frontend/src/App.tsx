@@ -345,9 +345,9 @@ function App() {
       <main className="main-content">
         <div className="chat-header">
           <div className="header-content">
-            <h2>AI 리버스 튜터링 솔루션 🎓</h2>
+            <h2>Reverse Tutoring.</h2>
             <p>
-              사용자가 선생님이 되어, 아무것도 모르는 AI에게 개념을 가르쳐주세요!
+              당신이 선생님이 되어, 백지상태의 AI를 완벽하게 이해시켜 보세요.
             </p>
           </div>
           <button onClick={toggleTheme} className="theme-toggle-btn" title="테마 변경">
@@ -366,9 +366,9 @@ function App() {
                   {(["naive", "average", "genius"] as const).map((p) => {
                     const isActive = (currentChat.persona || "naive") === p;
                     const labels: Record<Persona, string> = {
-                      naive: "🤪 순진한 바보",
-                      average: "😐 평범한 학습자",
-                      genius: "🤓 날카로운 천재",
+                      naive: "순진한 바보",
+                      average: "평범한 학습자",
+                      genius: "날카로운 천재",
                     };
                     return ( <button key={p} className={`persona-btn ${isActive ? "active" : ""}`} onClick={() => updatePersona(p)} >
                         {labels[p]}
@@ -403,23 +403,25 @@ function App() {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="chat-input-area">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="개념을 설명해주세요..."
-              disabled={isChatLoading || status !== "success"}
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={
-                isChatLoading || !inputText.trim() || status !== "success"
-              }
-            >
-              전송
-            </button>
+          <div className="input-wrapper">
+            <div className="chat-input-area">
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="선생님, 오늘 배울 개념은 무엇인가요?"
+                disabled={isChatLoading || status !== "success"}
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={
+                  isChatLoading || !inputText.trim() || status !== "success"
+                }
+              >
+                전송
+              </button>
+            </div>
           </div>
         </div>
       </main>
