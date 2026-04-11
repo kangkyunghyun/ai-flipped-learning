@@ -8,15 +8,18 @@ type Message = {
   text: string;
 };
 
+type Persona = "naive" | "average" | "genius";
+
 type ChatSession = {
   id: string;
   title: string;
   messages: Message[];
+  persona?: Persona;
 };
 
 const STORAGE_KEY_CHATS = "ai_tutor_chats";
 const STORAGE_KEY_CURRENT_CHAT_ID = "ai_tutor_current_chat_id";
-const DEFAULT_CHAT: ChatSession = { id: "default", title: "새로운 개념 학습", messages: [] };
+const DEFAULT_CHAT: ChatSession = { id: "default", title: "새로운 개념 학습", messages: [], persona: "naive" };
 
 function App() {
   const [message, setMessage] = useState("");
@@ -120,6 +123,7 @@ function App() {
       id: Date.now().toString(),
       title: "새로운 개념 학습",
       messages: [],
+      persona: "naive",
     };
     setChats((prev) => [newChat, ...prev]);
     setCurrentChatId(newChat.id);
@@ -157,7 +161,11 @@ function App() {
       const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText, history }),
+        body: JSON.stringify({ 
+          message: userText, 
+          history,
+          persona: currentChat.persona || "naive"
+        }),
       });
 
       if (!response.ok) throw new Error("채팅 요청 실패");
@@ -238,6 +246,14 @@ function App() {
     setEditingChatId(null);
   };
 
+  const updatePersona = (persona: Persona) => {
+    setChats((prev) =>
+      prev.map((chat) =>
+        chat.id === currentChatId ? { ...chat, persona } : chat
+      )
+    );
+  };
+
   return (
     <div className="app-layout">
       {/* 왼쪽 사이드바 (Gemini 스타일) */}
@@ -313,9 +329,57 @@ function App() {
         <div className="chat-container">
           <div className="chat-history">
             {currentChat.messages.length === 0 && (
-              <p className="empty-chat">
-                아래 입력창을 통해 바보 학생에게 첫 인사를 건네보세요!
-              </p>
+              <div className="empty-chat" style={{ textAlign: "center", marginTop: "40px" }}>
+                <p style={{ marginBottom: "20px", color: "#555" }}>
+                  아래에서 학생의 성향을 선택하고 첫 인사를 건네보세요!
+                </p>
+                <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginBottom: "30px" }}>
+                  <button
+                    style={{
+                      padding: "12px 20px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      border: (currentChat.persona || "naive") === "naive" ? "2px solid #007bff" : "1px solid #ddd",
+                      backgroundColor: (currentChat.persona || "naive") === "naive" ? "#e7f1ff" : "#fff",
+                      fontWeight: (currentChat.persona || "naive") === "naive" ? "bold" : "normal",
+                    }}
+                    onClick={() => updatePersona("naive")}
+                  >
+                    🤪 순진한 바보
+                  </button>
+                  <button
+                    style={{
+                      padding: "12px 20px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      border: currentChat.persona === "average" ? "2px solid #007bff" : "1px solid #ddd",
+                      backgroundColor: currentChat.persona === "average" ? "#e7f1ff" : "#fff",
+                      fontWeight: currentChat.persona === "average" ? "bold" : "normal",
+                    }}
+                    onClick={() => updatePersona("average")}
+                  >
+                    😐 평범한 학습자
+                  </button>
+                  <button
+                    style={{
+                      padding: "12px 20px",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      border: currentChat.persona === "genius" ? "2px solid #007bff" : "1px solid #ddd",
+                      backgroundColor: currentChat.persona === "genius" ? "#e7f1ff" : "#fff",
+                      fontWeight: currentChat.persona === "genius" ? "bold" : "normal",
+                    }}
+                    onClick={() => updatePersona("genius")}
+                  >
+                    🤓 날카로운 천재
+                  </button>
+                </div>
+                <p style={{ fontSize: "0.9rem", color: "#888" }}>
+                  {(currentChat.persona || "naive") === "naive" && "엉뚱한 오개념과 질문으로 메타인지를 돕습니다."}
+                  {currentChat.persona === "average" && "적당한 이해력을 바탕으로 논리적인 꼬리 질문을 던집니다."}
+                  {currentChat.persona === "genius" && "논리적 비약을 찾아내고 예리한 질문으로 지적 토론을 주도합니다."}
+                </p>
+              </div>
             )}
             {currentChat.messages.map((msg, idx) => (
               <div key={idx} className={`chat-message ${msg.role}`}>
