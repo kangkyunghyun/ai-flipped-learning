@@ -19,6 +19,7 @@ type ChatSession = {
 
 const STORAGE_KEY_CHATS = "ai_tutor_chats";
 const STORAGE_KEY_CURRENT_CHAT_ID = "ai_tutor_current_chat_id";
+const STORAGE_KEY_THEME = "ai_tutor_theme";
 const DEFAULT_CHAT: ChatSession = { id: "default", title: "새로운 개념 학습", messages: [], persona: "naive" };
 
 function App() {
@@ -26,6 +27,15 @@ function App() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading",
   );
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) as 'light' | 'dark' | null;
+    if (savedTheme) {
+      return savedTheme;
+    }
+    // 사용자의 시스템 테마 설정을 기본값으로 사용
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
 
   // 여러 개의 채팅 세션을 관리 (로컬 스토리지 연동)
   const [chats, setChats] = useState<ChatSession[]>(() => {
@@ -86,6 +96,16 @@ function App() {
       console.error("로컬 스토리지 현재 채팅 ID 저장 실패:", error);
     }
   }, [currentChatId]);
+
+  // 테마가 변경될 때마다 <html>에 data-theme 속성을 적용하고 로컬 스토리지에 저장
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem(STORAGE_KEY_THEME, theme);
+    } catch (error) {
+      console.error("테마 저장 실패:", error);
+    }
+  }, [theme]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -254,6 +274,10 @@ function App() {
     );
   };
 
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
+
   return (
     <div className="app-layout">
       {/* 왼쪽 사이드바 (Gemini 스타일) */}
@@ -320,20 +344,25 @@ function App() {
       {/* 메인 채팅 영역 */}
       <main className="main-content">
         <div className="chat-header">
-          <h2>AI 리버스 튜터링 솔루션 🎓</h2>
-          <p>
-            사용자가 선생님이 되어, 아무것도 모르는 AI에게 개념을 가르쳐주세요!
-          </p>
+          <div className="header-content">
+            <h2>AI 리버스 튜터링 솔루션 🎓</h2>
+            <p>
+              사용자가 선생님이 되어, 아무것도 모르는 AI에게 개념을 가르쳐주세요!
+            </p>
+          </div>
+          <button onClick={toggleTheme} className="theme-toggle-btn" title="테마 변경">
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
         </div>
 
         <div className="chat-container">
           <div className="chat-history">
             {currentChat.messages.length === 0 && (
-              <div className="empty-chat" style={{ textAlign: "center", marginTop: "40px" }}>
-                <p style={{ marginBottom: "20px", color: "#555" }}>
+              <div className="empty-chat">
+                <p>
                   아래에서 학생의 성향을 선택하고 첫 인사를 건네보세요!
                 </p>
-                <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginBottom: "30px" }}>
+                <div className="persona-buttons">
                   {(["naive", "average", "genius"] as const).map((p) => {
                     const isActive = (currentChat.persona || "naive") === p;
                     const labels: Record<Persona, string> = {
@@ -341,25 +370,13 @@ function App() {
                       average: "😐 평범한 학습자",
                       genius: "🤓 날카로운 천재",
                     };
-                    return (
-                      <button
-                        key={p}
-                        style={{
-                          padding: "12px 20px",
-                          borderRadius: "8px",
-                          cursor: "pointer",
-                          border: isActive ? "2px solid #007bff" : "1px solid #ddd",
-                          backgroundColor: isActive ? "#e7f1ff" : "#fff",
-                          fontWeight: isActive ? "bold" : "normal",
-                        }}
-                        onClick={() => updatePersona(p)}
-                      >
+                    return ( <button key={p} className={`persona-btn ${isActive ? "active" : ""}`} onClick={() => updatePersona(p)} >
                         {labels[p]}
                       </button>
                     );
                   })}
                 </div>
-                <p style={{ fontSize: "0.9rem", color: "#888" }}>
+                <p className="persona-description">
                   {{
                     naive: "엉뚱한 오개념과 질문으로 메타인지를 돕습니다.",
                     average: "적당한 이해력을 바탕으로 논리적인 꼬리 질문을 던집니다.",
