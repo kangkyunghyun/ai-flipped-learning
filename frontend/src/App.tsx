@@ -294,7 +294,7 @@ function App() {
               onClick={() => setCurrentChatId(chat.id)}
             >
               <div className="chat-title-container">
-                💬{" "}
+                <span>💬</span>
                 {editingChatId === chat.id ? (
                   <input
                     type="text"

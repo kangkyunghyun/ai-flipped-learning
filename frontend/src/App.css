@@ -164,7 +164,9 @@ body {
 .chat-title-container {
   flex-grow: 1;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .chat-title-text {
@@ -176,7 +178,9 @@ body {
 }
 
 .chat-edit-input {
-  width: 100%;
+  flex-grow: 1;
+  min-width: 0;
+  box-sizing: border-box;
   background: var(--bg-main);
   border: 1px solid var(--border-color-active);
   color: var(--text-main);
