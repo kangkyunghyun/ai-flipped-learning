@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./App.css";
@@ -18,9 +18,7 @@ type ChatSession = {
 };
 
 const STORAGE_KEY_CHATS = "ai_tutor_chats";
-const STORAGE_KEY_CURRENT_CHAT_ID = "ai_tutor_current_chat_id";
 const STORAGE_KEY_THEME = "ai_tutor_theme";
-const DEFAULT_CHAT: ChatSession = { id: "default", title: "새로운 개념 학습", messages: [], persona: "naive" };
 
 function App() {
   const [message, setMessage] = useState("");
@@ -49,27 +47,23 @@ function App() {
           const isValid = parsed.every(
             (chat: any) => chat?.id && Array.isArray(chat?.messages)
           );
-          if (isValid) return parsed;
+          if (isValid) {
+            // 내용이 없는 빈 채팅방은 스토리지에서 자동 제거
+            return parsed.filter((c: ChatSession) => c.messages.length > 0);
+          }
         }
       }
-      return [DEFAULT_CHAT];
+      return [];
     } catch (error) {
       console.error("로컬 스토리지 데이터 파싱 오류:", error);
-      return [DEFAULT_CHAT];
+      return [];
     }
   });
 
-  const [currentChatId, setCurrentChatId] = useState<string>(() => {
-    try {
-      const savedId = localStorage.getItem(STORAGE_KEY_CURRENT_CHAT_ID);
-      // 이미 파싱된 chats 상태를 활용하여 중복 파싱 제거
-      const isValidId = chats.some((chat: ChatSession) => chat.id === savedId);
-      // chats가 비어있을 경우를 대비한 방어 코드 추가 (DEFAULT_CHAT.id로 폴백)
-      return isValidId && savedId ? savedId : (chats.length > 0 ? chats[0].id : DEFAULT_CHAT.id);
-    } catch (error) {
-      return DEFAULT_CHAT.id;
-    }
-  });
+  // 항상 초기 화면은 "새 대화" 상태로 시작
+  const [currentChatId, setCurrentChatId] = useState<string>("new");
+  const [newChatPersona, setNewChatPersona] = useState<Persona>("naive");
+
   const [inputText, setInputText] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
@@ -77,7 +71,12 @@ function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 현재 활성화된 채팅방 객체 찾기
-  const currentChat = chats.find((c) => c.id === currentChatId) || chats[0];
+  const currentChat: ChatSession = useMemo(() => {
+    if (currentChatId === "new") {
+      return { id: "new", title: "새로운 개념 학습", messages: [], persona: newChatPersona };
+    }
+    return chats.find((c) => c.id === currentChatId) || { id: "new", title: "새로운 개념 학습", messages: [], persona: newChatPersona };
+  }, [currentChatId, newChatPersona, chats]);
 
   // 상태가 변경될 때마다 로컬 스토리지에 저장
   useEffect(() => {
@@ -88,14 +87,6 @@ function App() {
       alert("저장 공간이 부족하여 대화 기록을 저장하지 못했습니다. 불필요한 데이터를 지워주세요.");
     }
   }, [chats]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_CURRENT_CHAT_ID, currentChatId);
-    } catch (error) {
-      console.error("로컬 스토리지 현재 채팅 ID 저장 실패:", error);
-    }
-  }, [currentChatId]);
 
   // 테마가 변경될 때마다 <html>에 data-theme 속성을 적용하고 로컬 스토리지에 저장
   useEffect(() => {
@@ -139,14 +130,9 @@ function App() {
   }, [currentChat.messages, isChatLoading]);
 
   const handleNewChat = () => {
-    const newChat: ChatSession = {
-      id: Date.now().toString(),
-      title: "새로운 개념 학습",
-      messages: [],
-      persona: "naive",
-    };
-    setChats((prev) => [newChat, ...prev]);
-    setCurrentChatId(newChat.id);
+    // 빈 방을 생성하지 않고 상태만 "새 대화"로 전환
+    setCurrentChatId("new");
+    setNewChatPersona("naive");
   };
 
   const handleSendMessage = async () => {
@@ -155,19 +141,31 @@ function App() {
     const userText = inputText;
     const newUserMessage: Message = { role: "user", text: userText };
 
-    // 현재 채팅방에 사용자 메시지 추가 (첫 메시지면 제목도 변경)
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === currentChatId
-          ? {
-              ...chat,
-              title:
-                chat.messages.length === 0 ? userText.slice(0, 15) : chat.title,
-              messages: [...chat.messages, newUserMessage],
-            }
-          : chat,
-      ),
-    );
+    let targetChatId = currentChatId;
+    let targetPersona = currentChat.persona || "naive";
+
+    if (currentChatId === "new") {
+      // 첫 메시지 전송 시 실제 채팅방 생성 (Lazy Creation)
+      targetChatId = Date.now().toString();
+      const newChat: ChatSession = {
+        id: targetChatId,
+        title: userText.slice(0, 15),
+        messages: [newUserMessage],
+        persona: targetPersona,
+      };
+      setChats((prev) => [newChat, ...prev]);
+      setCurrentChatId(targetChatId);
+    } else {
+      // 기존 채팅방에 사용자 메시지 추가
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === currentChatId
+            ? { ...chat, messages: [...chat.messages, newUserMessage] }
+            : chat,
+        ),
+      );
+    }
+
     setInputText("");
     setIsChatLoading(true);
 
@@ -184,7 +182,7 @@ function App() {
         body: JSON.stringify({ 
           message: userText, 
           history,
-          persona: currentChat.persona || "naive"
+          persona: targetPersona
         }),
       });
 
@@ -195,7 +193,7 @@ function App() {
 
       setChats((prev) =>
         prev.map((chat) =>
-          chat.id === currentChatId
+          chat.id === targetChatId
             ? { ...chat, messages: [...chat.messages, aiMessage] }
             : chat,
         ),
@@ -208,7 +206,7 @@ function App() {
       };
       setChats((prev) =>
         prev.map((chat) =>
-          chat.id === currentChatId
+          chat.id === targetChatId
             ? { ...chat, messages: [...chat.messages, errorMessage] }
             : chat,
         ),
@@ -227,16 +225,12 @@ function App() {
 
   const handleDeleteChat = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (chats.length <= 1) {
-      alert("최소 1개의 대화방은 유지되어야 합니다.");
-      return;
-    }
     if (!window.confirm("정말 이 대화를 삭제하시겠습니까?")) return;
 
     const updated = chats.filter((c) => c.id !== id);
     setChats(updated);
     if (currentChatId === id) {
-      setCurrentChatId(updated[0].id);
+      setCurrentChatId("new");
     }
   };
 
@@ -267,11 +261,15 @@ function App() {
   };
 
   const updatePersona = (persona: Persona) => {
-    setChats((prev) =>
-      prev.map((chat) =>
-        chat.id === currentChatId ? { ...chat, persona } : chat
-      )
-    );
+    if (currentChatId === "new") {
+      setNewChatPersona(persona);
+    } else {
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === currentChatId ? { ...chat, persona } : chat
+        )
+      );
+    }
   };
 
   const toggleTheme = () => {
