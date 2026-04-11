@@ -139,7 +139,7 @@ function App() {
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isEvaluated) return;
+    if (!inputText.trim() || isEvaluated || isChatLoading || isEvaluating) return;
 
     const userText = inputText;
     const newUserMessage: Message = { role: "user", text: userText };
@@ -220,7 +220,7 @@ function App() {
   };
 
   const handleEvaluate = async () => {
-    if (currentChat.messages.length === 0 || isEvaluated) return;
+    if (currentChat.messages.length === 0 || isEvaluated || isEvaluating || isChatLoading) return;
     
     setIsEvaluating(true);
     setIsChatLoading(true);
@@ -438,15 +438,15 @@ function App() {
               </div>
             ))}
 
-            {currentChat.messages.length > 0 && !isEvaluated && !isChatLoading && (
+            {currentChat.messages.length > 0 && !isEvaluated && (!isChatLoading || isEvaluating) && (
               <div className="evaluate-wrapper">
                 <button className="evaluate-btn" onClick={handleEvaluate} disabled={isEvaluating}>
-                  🎓 학습 종료 및 피드백 받기
+                  {isEvaluating ? "⏳ 피드백 분석 중..." : "🎓 학습 종료 및 피드백 받기"}
                 </button>
               </div>
             )}
 
-            {isChatLoading && (
+            {isChatLoading && !isEvaluating && (
               <div className="chat-message model">
                 <div className="message-bubble loading">생각 중... 🤔</div>
               </div>
