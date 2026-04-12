@@ -193,6 +193,27 @@ function App() {
       };
       setChats((prev) => [newChat, ...prev]);
       setCurrentChatId(targetChatId);
+
+      // 채팅 흐름을 방해하지 않도록 비동기로 제목 생성 요청
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5001";
+      fetch(`${apiUrl.replace(/\/$/, "")}/api/title`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userText }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.title) {
+            setChats((prev) =>
+              prev.map((chat) =>
+                chat.id === targetChatId
+                  ? { ...chat, title: data.title }
+                  : chat,
+              ),
+            );
+          }
+        })
+        .catch((err) => console.error("제목 생성 실패:", err));
     } else {
       // 기존 채팅방에 사용자 메시지 추가
       setChats((prev) =>

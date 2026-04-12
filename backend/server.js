@@ -79,6 +79,27 @@ app.post("/api/chat", async (req, res, next) => {
   }
 });
 
+// 대화 제목 요약 엔드포인트
+app.post("/api/title", async (req, res, next) => {
+  try {
+    const { message } = req.body;
+    if (!message) {
+      return res.status(400).json({ message: "메시지가 비어 있습니다." });
+    }
+
+    const prompt = `다음 사용자의 첫 메시지를 바탕으로 대화의 주제를 10자 이내의 짧은 제목으로 요약해줘. 마크다운, 특수기호, 쌍따옴표, 마침표 없이 순수 텍스트(명사형)로 핵심 키워드만 말해.\n\n[메시지]: ${message}`;
+    const aiModel = genAI.getGenerativeModel({
+      model: "gemini-3.1-flash-lite-preview",
+    });
+    const result = await aiModel.generateContent(prompt);
+    const title = result.response.text().trim();
+
+    res.json({ title });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // 학습 평가 엔드포인트
 app.post("/api/evaluate", async (req, res, next) => {
   try {
@@ -94,7 +115,12 @@ app.post("/api/evaluate", async (req, res, next) => {
     });
 
     // 평가 시에는 history 배열을 하나의 텍스트 대화록으로 묶어서 프롬프트에 주입
-    const conversation = history.map(m => `${m.role === 'user' ? '선생님(사용자)' : '학생(AI)'}: ${m.parts?.[0]?.text || ''}`).join('\n\n');
+    const conversation = history
+      .map(
+        (m) =>
+          `${m.role === "user" ? "선생님(사용자)" : "학생(AI)"}: ${m.parts?.[0]?.text || ""}`,
+      )
+      .join("\n\n");
     const prompt = `다음은 선생님(사용자)과 학생(AI)의 대화 내역이야. 이를 바탕으로 선생님의 가르침을 객관적으로 평가해줘.\n\n[대화 내역]\n${conversation}`;
 
     const result = await aiModel.generateContentStream(prompt);
