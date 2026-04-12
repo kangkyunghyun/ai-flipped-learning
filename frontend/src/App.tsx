@@ -549,6 +549,7 @@ function App() {
             <button
               className="mobile-menu-btn"
               onClick={() => setIsSidebarOpen(true)}
+              aria-label="메뉴 열기"
             >
               ☰
             </button>
