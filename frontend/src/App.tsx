@@ -21,8 +21,7 @@ const STORAGE_KEY_CHATS = "ai_tutor_chats";
 const STORAGE_KEY_THEME = "ai_tutor_theme";
 
 const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.PROD ? "" : "http://localhost:5001")
+  import.meta.env.VITE_API_URL || "http://localhost:5001"
 ).replace(/\/$/, "");
 
 function App() {
@@ -422,7 +421,12 @@ function App() {
               status === "success" ? "status-text-success" : "status-text-error"
             }
           >
-            서버: {status === "success" ? "연결됨 🟢" : "연결 중... 🔴"}
+            서버:{" "}
+            {status === "success"
+              ? "연결됨 🟢"
+              : status === "error"
+                ? "연결 실패 🔴"
+                : "연결 중... 🟡"}
           </span>
         </div>
       </aside>
