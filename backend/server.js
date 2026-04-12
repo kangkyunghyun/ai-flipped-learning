@@ -89,12 +89,21 @@ app.post("/api/title", async (req, res, next) => {
 
     const truncatedMessage =
       message.length > 1000 ? message.slice(0, 1000) + "..." : message;
-    const prompt = `다음 사용자의 첫 메시지를 바탕으로 대화의 주제를 10자 이내의 짧은 제목으로 요약해줘. 마크다운, 특수기호, 쌍따옴표, 마침표 없이 순수 텍스트(명사형)로 핵심 키워드만 말해.\n\n[메시지]: ${truncatedMessage}`;
+    const prompt = `다음 사용자의 첫 메시지를 바탕으로 대화의 주제를 10자 이내의 짧은 제목으로 요약해줘. 쌍따옴표, 마침표 없이 명사형 핵심 키워드로 말하되, 수학 수식이 핵심이라면 LaTeX 문법($ $)을 그대로 사용해도 좋아.\n\n[메시지]: ${truncatedMessage}`;
     const aiModel = genAI.getGenerativeModel({
       model: "gemini-3.1-flash-lite-preview",
     });
-    const result = await aiModel.generateContent(prompt);
-    const title = result.response.text().trim();
+
+    let title = "새 대화";
+    try {
+      const result = await aiModel.generateContent(prompt);
+      title = result.response.text().trim();
+    } catch (apiError) {
+      console.warn(
+        "제목 생성 실패 (안전 정책 또는 추출 에러):",
+        apiError.message,
+      );
+    }
 
     res.json({ title });
   } catch (error) {
