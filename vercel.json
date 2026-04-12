@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "backend/server.js": {
+      "runtime": "vercel-node@latest"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

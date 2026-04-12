@@ -14,8 +14,8 @@ if (
   !process.env.FRONTEND_URL &&
   !process.env.VERCEL_URL
 ) {
-  console.warn(
-    "FRONTEND_URL 환경 변수가 없습니다. Vercel 도메인 설정을 사용합니다.",
+  throw new Error(
+    "FRONTEND_URL 및 VERCEL_URL 환경 변수가 없습니다. 운영 환경에서는 보안을 위해 유효한 CORS 도메인 설정이 필수입니다.",
   );
 }
 
@@ -46,8 +46,7 @@ app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL ||
-          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "*")
+        ? process.env.FRONTEND_URL || `https://${process.env.VERCEL_URL}`
         : "http://localhost:5173", // 로컬 개발 환경의 프론트엔드 포트
   }),
 );

@@ -20,6 +20,11 @@ type ChatSession = {
 const STORAGE_KEY_CHATS = "ai_tutor_chats";
 const STORAGE_KEY_THEME = "ai_tutor_theme";
 
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? "" : "http://localhost:5001")
+).replace(/\/$/, "");
+
 function App() {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -126,10 +131,7 @@ function App() {
     const controller = new AbortController();
 
     // 백엔드 통신 테스트
-    const apiUrl =
-      import.meta.env.VITE_API_URL ||
-      (import.meta.env.PROD ? "" : "http://localhost:5001");
-    fetch(`${apiUrl.replace(/\/$/, "")}/api/health`, {
+    fetch(`${API_BASE_URL}/api/health`, {
       signal: controller.signal,
     })
       .then((res) => {
@@ -200,9 +202,6 @@ function App() {
     setIsChatLoading(true);
 
     try {
-      const apiUrl =
-        import.meta.env.VITE_API_URL ||
-        (import.meta.env.PROD ? "" : "http://localhost:5001");
       const history = currentChat.messages
         .filter((m) => m.role !== "evaluator")
         .map((msg) => ({
@@ -210,7 +209,7 @@ function App() {
           parts: [{ text: msg.text }],
         }));
 
-      const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/chat`, {
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -263,9 +262,6 @@ function App() {
     setIsChatLoading(true);
 
     try {
-      const apiUrl =
-        import.meta.env.VITE_API_URL ||
-        (import.meta.env.PROD ? "" : "http://localhost:5001");
       // 이전 대화 내역 포맷팅 (평가 메시지는 제외)
       const history = currentChat.messages
         .filter((m) => m.role !== "evaluator")
@@ -274,14 +270,11 @@ function App() {
           parts: [{ text: msg.text }],
         }));
 
-      const response = await fetch(
-        `${apiUrl.replace(/\/$/, "")}/api/evaluate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ history }),
-        },
-      );
+      const response = await fetch(`${API_BASE_URL}/api/evaluate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history }),
+      });
 
       if (!response.ok) throw new Error("평가 요청 실패");
 
