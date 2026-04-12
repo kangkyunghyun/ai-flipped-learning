@@ -3,7 +3,7 @@
   "outputDirectory": "frontend/dist",
   "functions": {
     "backend/server.js": {
-      "runtime": "@vercel/node@latest"
+      "runtime": "nodejs20.x"
     }
   },
   "rewrites": [
