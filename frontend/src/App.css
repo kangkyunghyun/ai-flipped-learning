@@ -517,6 +517,8 @@ body {
   box-shadow: var(--shadow-floating);
   pointer-events: auto;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  position: relative;
+  overflow: hidden;
 }
 
 .chat-input-area:focus-within {
@@ -567,6 +569,24 @@ body {
 .chat-input-area button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 서버 대기/에러 상태 블러 오버레이 */
+.input-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-surface);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10;
+  border-radius: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  animation: fadeIn 0.4s ease;
 }
 
 /* Scrollbar - Soft & Invisible */

@@ -25,19 +25,15 @@ function App() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading",
   );
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) as
-      | "light"
-      | "dark"
-      | null;
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) as 'light' | 'dark' | null;
     if (savedTheme) {
       return savedTheme;
     }
     // 사용자의 시스템 테마 설정을 기본값으로 사용
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
+
 
   // 여러 개의 채팅 세션을 관리 (로컬 스토리지 연동)
   const [chats, setChats] = useState<ChatSession[]>(() => {
@@ -49,7 +45,7 @@ function App() {
         if (Array.isArray(parsed) && parsed.length > 0) {
           // 데이터 구조 검증: 필수 필드(id, messages) 존재 여부 확인
           const isValid = parsed.every(
-            (chat: any) => chat?.id && Array.isArray(chat?.messages),
+            (chat: any) => chat?.id && Array.isArray(chat?.messages)
           );
           if (isValid) {
             // 내용이 없는 빈 채팅방은 스토리지에서 자동 제거
@@ -78,21 +74,9 @@ function App() {
   // 현재 활성화된 채팅방 객체 찾기
   const currentChat: ChatSession = useMemo(() => {
     if (currentChatId === "new") {
-      return {
-        id: "new",
-        title: "새로운 개념 학습",
-        messages: [],
-        persona: newChatPersona,
-      };
+      return { id: "new", title: "새로운 개념 학습", messages: [], persona: newChatPersona };
     }
-    return (
-      chats.find((c) => c.id === currentChatId) || {
-        id: "new",
-        title: "새로운 개념 학습",
-        messages: [],
-        persona: newChatPersona,
-      }
-    );
+    return chats.find((c) => c.id === currentChatId) || { id: "new", title: "새로운 개념 학습", messages: [], persona: newChatPersona };
   }, [currentChatId, newChatPersona, chats]);
 
   const isEvaluated = currentChat.messages.some((m) => m.role === "evaluator");
@@ -102,13 +86,8 @@ function App() {
     try {
       localStorage.setItem(STORAGE_KEY_CHATS, JSON.stringify(chats));
     } catch (error) {
-      console.error(
-        "로컬 스토리지 채팅 데이터 저장 실패 (용량 초과 등):",
-        error,
-      );
-      alert(
-        "저장 공간이 부족하여 대화 기록을 저장하지 못했습니다. 불필요한 데이터를 지워주세요.",
-      );
+      console.error("로컬 스토리지 채팅 데이터 저장 실패 (용량 초과 등):", error);
+      alert("저장 공간이 부족하여 대화 기록을 저장하지 못했습니다. 불필요한 데이터를 지워주세요.");
     }
   }, [chats]);
 
@@ -150,10 +129,7 @@ function App() {
 
   // 메시지가 추가될 때마다 스크롤을 맨 아래로 부드럽게 이동
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
-    });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [currentChat.messages, isChatLoading]);
 
   const handleNewChat = () => {
@@ -162,40 +138,8 @@ function App() {
     setNewChatPersona("naive");
   };
 
-  // 스트리밍 응답을 읽어와서 채팅 상태를 업데이트하는 유틸리티 함수
-  const readStreamResponse = async (response: Response, chatId: string) => {
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder("utf-8");
-    let accumulatedText = "";
-
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        accumulatedText += decoder.decode(value, { stream: true });
-
-        setChats((prev) =>
-          prev.map((chat) =>
-            chat.id === chatId
-              ? {
-                  ...chat,
-                  messages: chat.messages.map((m, i) =>
-                    i === chat.messages.length - 1
-                      ? { ...m, text: accumulatedText }
-                      : m,
-                  ),
-                }
-              : chat,
-          ),
-        );
-      }
-    }
-  };
-
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isEvaluated || isChatLoading || isEvaluating)
-      return;
+    if (!inputText.trim() || isEvaluated || isChatLoading || isEvaluating) return;
 
     const userText = inputText;
     const newUserMessage: Message = { role: "user", text: userText };
@@ -230,37 +174,33 @@ function App() {
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5001";
-      const history = currentChat.messages
-        .filter((m) => m.role !== "evaluator")
-        .map((msg) => ({
-          role: msg.role,
-          parts: [{ text: msg.text }],
-        }));
+      const history = currentChat.messages.filter(m => m.role !== "evaluator").map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.text }],
+      }));
 
       const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userText,
+        body: JSON.stringify({ 
+          message: userText, 
           history,
-          persona: targetPersona,
+          persona: targetPersona
         }),
       });
 
       if (!response.ok) throw new Error("채팅 요청 실패");
 
+      const data = await response.json();
+      const aiMessage: Message = { role: "model", text: data.reply };
+
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === targetChatId
-            ? {
-                ...chat,
-                messages: [...chat.messages, { role: "model", text: "" }],
-              }
+            ? { ...chat, messages: [...chat.messages, aiMessage] }
             : chat,
         ),
       );
-
-      await readStreamResponse(response, targetChatId);
     } catch (error) {
       console.error(error);
       const errorMessage: Message = {
@@ -280,50 +220,37 @@ function App() {
   };
 
   const handleEvaluate = async () => {
-    if (
-      currentChat.messages.length === 0 ||
-      isEvaluated ||
-      isEvaluating ||
-      isChatLoading
-    )
-      return;
-
+    if (currentChat.messages.length === 0 || isEvaluated || isEvaluating || isChatLoading) return;
+    
     setIsEvaluating(true);
     setIsChatLoading(true);
 
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5001";
       // 이전 대화 내역 포맷팅 (평가 메시지는 제외)
-      const history = currentChat.messages
-        .filter((m) => m.role !== "evaluator")
-        .map((msg) => ({
-          role: msg.role,
-          parts: [{ text: msg.text }],
-        }));
+      const history = currentChat.messages.filter(m => m.role !== "evaluator").map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.text }],
+      }));
 
-      const response = await fetch(
-        `${apiUrl.replace(/\/$/, "")}/api/evaluate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ history }),
-        },
-      );
+      const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/evaluate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history }),
+      });
 
       if (!response.ok) throw new Error("평가 요청 실패");
+
+      const data = await response.json();
+      const evalMessage: Message = { role: "evaluator", text: data.reply };
 
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === currentChatId
-            ? {
-                ...chat,
-                messages: [...chat.messages, { role: "evaluator", text: "" }],
-              }
+            ? { ...chat, messages: [...chat.messages, evalMessage] }
             : chat,
         ),
       );
-
-      await readStreamResponse(response, currentChatId);
     } catch (error) {
       console.error(error);
       alert("평가 중 오류가 발생했습니다. 다시 시도해주세요.");
@@ -357,10 +284,7 @@ function App() {
     setEditingTitle(title);
   };
 
-  const handleSaveEdit = (
-    e: React.KeyboardEvent | React.FocusEvent,
-    id: string,
-  ) => {
+  const handleSaveEdit = (e: React.KeyboardEvent | React.FocusEvent, id: string) => {
     e.stopPropagation();
     if (e.type === "keydown") {
       const key = (e as React.KeyboardEvent).key;
@@ -374,11 +298,7 @@ function App() {
     const trimmedTitle = editingTitle.trim();
     if (trimmedTitle) {
       setChats((prev) =>
-        prev.map((chat) =>
-          chat.id === id && chat.title !== trimmedTitle
-            ? { ...chat, title: trimmedTitle }
-            : chat,
-        ),
+        prev.map((chat) => (chat.id === id && chat.title !== trimmedTitle ? { ...chat, title: trimmedTitle } : chat))
       );
     }
     setEditingChatId(null);
@@ -390,8 +310,8 @@ function App() {
     } else {
       setChats((prev) =>
         prev.map((chat) =>
-          chat.id === currentChatId ? { ...chat, persona } : chat,
-        ),
+          chat.id === currentChatId ? { ...chat, persona } : chat
+        )
       );
     }
   };
@@ -472,12 +392,8 @@ function App() {
               당신이 선생님이 되어, 백지상태의 AI를 완벽하게 이해시켜 보세요.
             </p>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="theme-toggle-btn"
-            title="테마 변경"
-          >
-            {theme === "light" ? "🌙" : "☀️"}
+          <button onClick={toggleTheme} className="theme-toggle-btn" title="테마 변경">
+            {theme === 'light' ? '🌙' : '☀️'}
           </button>
         </div>
 
@@ -485,7 +401,9 @@ function App() {
           <div className="chat-history">
             {currentChat.messages.length === 0 && (
               <div className="empty-chat">
-                <p>아래에서 학생의 성향을 선택하고 첫 인사를 건네보세요!</p>
+                <p>
+                  아래에서 학생의 성향을 선택하고 첫 인사를 건네보세요!
+                </p>
                 <div className="persona-buttons">
                   {(["naive", "average", "genius"] as const).map((p) => {
                     const isActive = (currentChat.persona || "naive") === p;
@@ -494,27 +412,18 @@ function App() {
                       average: "평범한 학습자",
                       genius: "날카로운 천재",
                     };
-                    return (
-                      <button
-                        key={p}
-                        className={`persona-btn ${isActive ? "active" : ""}`}
-                        onClick={() => updatePersona(p)}
-                      >
+                    return ( <button key={p} className={`persona-btn ${isActive ? "active" : ""}`} onClick={() => updatePersona(p)} >
                         {labels[p]}
                       </button>
                     );
                   })}
                 </div>
                 <p className="persona-description">
-                  {
-                    {
-                      naive: "엉뚱한 오개념과 질문으로 메타인지를 돕습니다.",
-                      average:
-                        "적당한 이해력을 바탕으로 논리적인 꼬리 질문을 던집니다.",
-                      genius:
-                        "논리적 비약을 찾아내고 예리한 질문으로 지적 토론을 주도합니다.",
-                    }[currentChat.persona || "naive"]
-                  }
+                  {{
+                    naive: "엉뚱한 오개념과 질문으로 메타인지를 돕습니다.",
+                    average: "적당한 이해력을 바탕으로 논리적인 꼬리 질문을 던집니다.",
+                    genius: "논리적 비약을 찾아내고 예리한 질문으로 지적 토론을 주도합니다.",
+                  }[currentChat.persona || "naive"]}
                 </p>
               </div>
             )}
@@ -529,21 +438,13 @@ function App() {
               </div>
             ))}
 
-            {currentChat.messages.length > 0 &&
-              !isEvaluated &&
-              (!isChatLoading || isEvaluating) && (
-                <div className="evaluate-wrapper">
-                  <button
-                    className="evaluate-btn"
-                    onClick={handleEvaluate}
-                    disabled={isEvaluating}
-                  >
-                    {isEvaluating
-                      ? "⏳ 피드백 분석 중..."
-                      : "🎓 학습 종료 및 피드백 받기"}
-                  </button>
-                </div>
-              )}
+            {currentChat.messages.length > 0 && !isEvaluated && (!isChatLoading || isEvaluating) && (
+              <div className="evaluate-wrapper">
+                <button className="evaluate-btn" onClick={handleEvaluate} disabled={isEvaluating}>
+                  {isEvaluating ? "⏳ 피드백 분석 중..." : "🎓 학습 종료 및 피드백 받기"}
+                </button>
+              </div>
+            )}
 
             {isChatLoading && !isEvaluating && (
               <div className="chat-message model">
@@ -555,25 +456,26 @@ function App() {
 
           <div className="input-wrapper">
             <div className="chat-input-area">
+              {/* 서버 연결 상태 블러 오버레이 */}
+              {status !== "success" && (
+                <div className="input-overlay">
+                  {status === "loading"
+                    ? "⏳ 서버를 깨우고 있어요! 조금만 기다려주세요..."
+                    : "🚨 서버와 연결할 수 없습니다. 잠시 후 새로고침 해주세요."}
+                </div>
+              )}
               <input
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={
-                  isEvaluated
-                    ? "학습이 종료되었습니다. 새 대화를 시작해주세요."
-                    : "선생님, 오늘 배울 개념은 무엇인가요?"
-                }
+                placeholder={isEvaluated ? "학습이 종료되었습니다. 새 대화를 시작해주세요." : "선생님, 오늘 배울 개념은 무엇인가요?"}
                 disabled={isChatLoading || status !== "success" || isEvaluated}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={
-                  isChatLoading ||
-                  !inputText.trim() ||
-                  status !== "success" ||
-                  isEvaluated
+                  isChatLoading || !inputText.trim() || status !== "success" || isEvaluated
                 }
               >
                 전송
