@@ -81,6 +81,7 @@ function App() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 현재 활성화된 채팅방 객체 찾기
@@ -167,6 +168,7 @@ function App() {
     // 빈 방을 생성하지 않고 상태만 "새 대화"로 전환
     setCurrentChatId("new");
     setNewChatPersona("naive");
+    setIsSidebarOpen(false);
   };
 
   const handleSendMessage = async () => {
@@ -459,8 +461,13 @@ function App() {
 
   return (
     <div className="app-layout">
+      {/* 모바일 오버레이 */}
+      {isSidebarOpen && (
+        <div className="mobile-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+      )}
+
       {/* 왼쪽 사이드바 (Gemini 스타일) */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
         <button className="new-chat-btn" onClick={handleNewChat}>
           <span className="plus-icon">+</span> 새 대화
         </button>
@@ -469,8 +476,13 @@ function App() {
           {chats.map((chat) => (
             <div
               key={chat.id}
-              className={`chat-list-item ${chat.id === currentChatId ? "active" : ""}`}
-              onClick={() => setCurrentChatId(chat.id)}
+              className={`chat-list-item ${
+                chat.id === currentChatId ? "active" : ""
+              }`}
+              onClick={() => {
+                setCurrentChatId(chat.id);
+                setIsSidebarOpen(false);
+              }}
             >
               <div className="chat-title-container">
                 <span>💬</span>
@@ -533,11 +545,18 @@ function App() {
       {/* 메인 채팅 영역 */}
       <main className="main-content">
         <div className="chat-header">
-          <div className="header-content">
-            <h2>Reverse Tutoring.</h2>
-            <p>
-              당신이 선생님이 되어, 백지상태의 AI를 완벽하게 이해시켜 보세요.
-            </p>
+          <div className="header-left">
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="메뉴 열기"
+            >
+              ☰
+            </button>
+            <div className="header-content">
+              <h2>Reverse Tutoring.</h2>
+              <p>당신이 선생님이 되어, 백지상태의 AI를 완벽하게 이해시켜 보세요.</p>
+            </div>
           </div>
           <button
             onClick={toggleTheme}
