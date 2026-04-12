@@ -218,7 +218,6 @@ function App() {
 
       if (!response.ok) throw new Error("채팅 요청 실패");
 
-      setIsChatLoading(false);
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === targetChatId
@@ -233,26 +232,33 @@ function App() {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder("utf-8");
       let aiText = "";
+      let isFirstChunk = true;
 
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
+          if (isFirstChunk) {
+            setIsChatLoading(false);
+            isFirstChunk = false;
+          }
+
           aiText += decoder.decode(value, { stream: true });
 
           setChats((prev) =>
-            prev.map((chat) => {
-              if (chat.id === targetChatId) {
-                const newMessages = [...chat.messages];
-                newMessages[newMessages.length - 1] = {
-                  role: "model",
-                  text: aiText,
-                };
-                return { ...chat, messages: newMessages };
-              }
-              return chat;
-            }),
+            prev.map((chat) =>
+              chat.id === targetChatId
+                ? {
+                    ...chat,
+                    messages: chat.messages.map((m, i) =>
+                      i === chat.messages.length - 1
+                        ? { ...m, text: aiText }
+                        : m,
+                    ),
+                  }
+                : chat,
+            ),
           );
         }
       }
@@ -307,7 +313,6 @@ function App() {
 
       if (!response.ok) throw new Error("평가 요청 실패");
 
-      setIsChatLoading(false);
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === currentChatId
@@ -322,26 +327,33 @@ function App() {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder("utf-8");
       let evalText = "";
+      let isFirstChunk = true;
 
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
+          if (isFirstChunk) {
+            setIsChatLoading(false);
+            isFirstChunk = false;
+          }
+
           evalText += decoder.decode(value, { stream: true });
 
           setChats((prev) =>
-            prev.map((chat) => {
-              if (chat.id === currentChatId) {
-                const newMessages = [...chat.messages];
-                newMessages[newMessages.length - 1] = {
-                  role: "evaluator",
-                  text: evalText,
-                };
-                return { ...chat, messages: newMessages };
-              }
-              return chat;
-            }),
+            prev.map((chat) =>
+              chat.id === currentChatId
+                ? {
+                    ...chat,
+                    messages: chat.messages.map((m, i) =>
+                      i === chat.messages.length - 1
+                        ? { ...m, text: evalText }
+                        : m,
+                    ),
+                  }
+                : chat,
+            ),
           );
         }
       }

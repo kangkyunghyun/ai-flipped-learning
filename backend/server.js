@@ -68,7 +68,6 @@ app.post("/api/chat", async (req, res, next) => {
     const result = await chatSession.sendMessageStream(message);
 
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("Transfer-Encoding", "chunked");
     res.setHeader("X-Accel-Buffering", "no"); // 프록시 서버 버퍼링 강제 비활성화
     res.setHeader("Cache-Control", "no-cache");
 
@@ -107,7 +106,6 @@ app.post("/api/evaluate", async (req, res, next) => {
     const result = await aiModel.generateContentStream(prompt);
 
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("Transfer-Encoding", "chunked");
     res.setHeader("X-Accel-Buffering", "no"); // 프록시 서버 버퍼링 강제 비활성화
     res.setHeader("Cache-Control", "no-cache");
 
