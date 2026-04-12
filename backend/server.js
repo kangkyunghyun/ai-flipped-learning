@@ -9,28 +9,25 @@ import { systemInstructions, evaluatorInstruction } from "./prompts.js";
 dotenv.config();
 dotenv.config({ path: "../.env" });
 
-if (
-  process.env.NODE_ENV === "production" &&
-  !process.env.FRONTEND_URL &&
-  !process.env.VERCEL_URL
-) {
-  throw new Error(
-    "FRONTEND_URL 및 VERCEL_URL 환경 변수가 없습니다. 운영 환경에서는 보안을 위해 유효한 CORS 도메인 설정이 필수입니다.",
-  );
-}
-
 const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Gemini API 초기화 (환경 변수에서 API 키 로드)
 const geminiApiKey = process.env.GEMINI_API_KEY;
+let genAI;
 if (!geminiApiKey) {
-  throw new Error("GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.");
+  console.warn(
+    "⚠️ GEMINI_API_KEY 환경 변수가 설정되지 않았습니다. AI 채팅 시 에러가 발생합니다.",
+  );
+} else {
+  genAI = new GoogleGenerativeAI(geminiApiKey);
 }
-const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 // 요청받은 페르소나에 맞춰 모델을 동적으로 생성하는 함수
 const getModel = (persona) => {
+  if (!genAI) {
+    throw new Error("서버에 GEMINI_API_KEY가 설정되지 않았습니다.");
+  }
   const systemInstruction = ["naive", "average", "genius"].includes(persona)
     ? systemInstructions[persona]
     : systemInstructions.naive;
@@ -46,7 +43,8 @@ app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL || `https://${process.env.VERCEL_URL}`
+        ? process.env.FRONTEND_URL ||
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : true)
         : "http://localhost:5173", // 로컬 개발 환경의 프론트엔드 포트
   }),
 );
@@ -87,6 +85,10 @@ app.post("/api/evaluate", async (req, res, next) => {
 
     if (!history || history.length === 0) {
       return res.status(400).json({ message: "평가할 대화 내역이 없습니다." });
+    }
+
+    if (!genAI) {
+      throw new Error("서버에 GEMINI_API_KEY가 설정되지 않았습니다.");
     }
 
     const aiModel = genAI.getGenerativeModel({

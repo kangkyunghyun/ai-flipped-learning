@@ -422,7 +422,12 @@ function App() {
               status === "success" ? "status-text-success" : "status-text-error"
             }
           >
-            서버: {status === "success" ? "연결됨 🟢" : "연결 중... 🔴"}
+            서버:{" "}
+            {status === "success"
+              ? "연결됨 🟢"
+              : status === "error"
+                ? "연결 실패 🔴"
+                : "연결 중... 🟡"}
           </span>
         </div>
       </aside>
