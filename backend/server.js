@@ -51,12 +51,12 @@ app.use(
 app.use(express.json({ limit: "1mb" }));
 
 // 테스트용 헬스체크 엔드포인트
-app.get("/api/health", (req, res) => {
+app.get(["/api/health", "/health"], (req, res) => {
   res.json({ message: "백엔드 서버와 성공적으로 연결되었습니다! 🚀" });
 });
 
 // 백지상태 AI와의 채팅 엔드포인트
-app.post("/api/chat", async (req, res, next) => {
+app.post(["/api/chat", "/chat"], async (req, res, next) => {
   try {
     const { message, history, persona } = req.body;
 
@@ -79,7 +79,7 @@ app.post("/api/chat", async (req, res, next) => {
 });
 
 // 학습 평가 엔드포인트
-app.post("/api/evaluate", async (req, res, next) => {
+app.post(["/api/evaluate", "/evaluate"], async (req, res, next) => {
   try {
     const { history } = req.body;
 
