@@ -162,6 +162,37 @@ function App() {
     setNewChatPersona("naive");
   };
 
+  // 스트리밍 응답을 읽어와서 채팅 상태를 업데이트하는 유틸리티 함수
+  const readStreamResponse = async (response: Response, chatId: string) => {
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let accumulatedText = "";
+
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        accumulatedText += decoder.decode(value, { stream: true });
+
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.id === chatId
+              ? {
+                  ...chat,
+                  messages: chat.messages.map((m, i) =>
+                    i === chat.messages.length - 1
+                      ? { ...m, text: accumulatedText }
+                      : m,
+                  ),
+                }
+              : chat,
+          ),
+        );
+      }
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputText.trim() || isEvaluated || isChatLoading || isEvaluating)
       return;
@@ -229,39 +260,7 @@ function App() {
         ),
       );
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let aiText = "";
-      let isFirstChunk = true;
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          if (isFirstChunk) {
-            setIsChatLoading(false);
-            isFirstChunk = false;
-          }
-
-          aiText += decoder.decode(value, { stream: true });
-
-          setChats((prev) =>
-            prev.map((chat) =>
-              chat.id === targetChatId
-                ? {
-                    ...chat,
-                    messages: chat.messages.map((m, i) =>
-                      i === chat.messages.length - 1
-                        ? { ...m, text: aiText }
-                        : m,
-                    ),
-                  }
-                : chat,
-            ),
-          );
-        }
-      }
+      await readStreamResponse(response, targetChatId);
     } catch (error) {
       console.error(error);
       const errorMessage: Message = {
@@ -324,39 +323,7 @@ function App() {
         ),
       );
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let evalText = "";
-      let isFirstChunk = true;
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          if (isFirstChunk) {
-            setIsChatLoading(false);
-            isFirstChunk = false;
-          }
-
-          evalText += decoder.decode(value, { stream: true });
-
-          setChats((prev) =>
-            prev.map((chat) =>
-              chat.id === currentChatId
-                ? {
-                    ...chat,
-                    messages: chat.messages.map((m, i) =>
-                      i === chat.messages.length - 1
-                        ? { ...m, text: evalText }
-                        : m,
-                    ),
-                  }
-                : chat,
-            ),
-          );
-        }
-      }
+      await readStreamResponse(response, currentChatId);
     } catch (error) {
       console.error(error);
       alert("평가 중 오류가 발생했습니다. 다시 시도해주세요.");
