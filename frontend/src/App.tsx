@@ -25,8 +25,8 @@ function App() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading",
   );
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) as 'light' | 'dark' | null;
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) as "light" | "dark" | null;
     if (savedTheme) {
       return savedTheme;
     }
@@ -270,6 +270,7 @@ function App() {
       if (!response.ok) throw new Error("평가 요청 실패");
 
       setIsChatLoading(false);
+      setIsStreaming(true);
 
       setChats((prev) =>
         prev.map((chat) =>
@@ -446,7 +447,7 @@ function App() {
             </p>
           </div>
           <button onClick={toggleTheme} className="theme-toggle-btn" title="테마 변경">
-            {theme === 'light' ? '🌙' : '☀️'}
+            {theme === "light" ? "🌙" : "☀️"}
           </button>
         </div>
 
