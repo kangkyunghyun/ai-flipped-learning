@@ -65,15 +65,10 @@ app.post("/api/chat", async (req, res, next) => {
     // 이전 대화 기록을 포함하여 채팅 세션 시작
     const chatSession = aiModel.startChat({ history: history || [] });
 
-    const result = await chatSession.sendMessageStream(message);
+    const result = await chatSession.sendMessage(message);
+    const responseText = result.response.text();
 
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("Transfer-Encoding", "chunked");
-
-    for await (const chunk of result.stream) {
-      res.write(chunk.text());
-    }
-    res.end();
+    res.json({ reply: responseText });
   } catch (error) {
     next(error);
   }
@@ -134,15 +129,10 @@ app.post("/api/evaluate", async (req, res, next) => {
       .join("\n\n");
     const prompt = `다음은 선생님(사용자)과 학생(AI)의 대화 내역이야. 이를 바탕으로 선생님의 가르침을 객관적으로 평가해줘.\n\n[대화 내역]\n${conversation}`;
 
-    const result = await aiModel.generateContentStream(prompt);
+    const result = await aiModel.generateContent(prompt);
+    const responseText = result.response.text();
 
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.setHeader("Transfer-Encoding", "chunked");
-
-    for await (const chunk of result.stream) {
-      res.write(chunk.text());
-    }
-    res.end();
+    res.json({ reply: responseText });
   } catch (error) {
     next(error);
   }
