@@ -44,7 +44,7 @@ app.use(
     origin:
       process.env.NODE_ENV === "production"
         ? process.env.FRONTEND_URL ||
-          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : true)
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : false)
         : "http://localhost:5173", // 로컬 개발 환경의 프론트엔드 포트
   }),
 );
