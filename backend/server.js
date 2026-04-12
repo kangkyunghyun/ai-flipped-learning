@@ -123,7 +123,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "서버에서 오류가 발생했습니다." });
 });
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Backend server is running on port ${PORT}`);
   });
