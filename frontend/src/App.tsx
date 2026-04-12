@@ -77,7 +77,6 @@ function App() {
 
   const [inputText, setInputText] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -172,13 +171,7 @@ function App() {
   };
 
   const handleSendMessage = async () => {
-    if (
-      !inputText.trim() ||
-      isEvaluated ||
-      isChatLoading ||
-      isEvaluating ||
-      isStreaming
-    )
+    if (!inputText.trim() || isEvaluated || isChatLoading || isEvaluating)
       return;
 
     const userText = inputText;
@@ -192,14 +185,14 @@ function App() {
       targetChatId = Date.now().toString();
       const newChat: ChatSession = {
         id: targetChatId,
-        title: userText.slice(0, 15),
+        title: "새로운 개념 학습",
         messages: [newUserMessage],
         persona: targetPersona,
       };
       setChats((prev) => [newChat, ...prev]);
       setCurrentChatId(targetChatId);
 
-      // 채팅 흐름을 방해하지 않도록 비동기로 제목 생성 요청
+      // 비동기로 제목 생성 요청
       fetch(`${API_BASE_URL}/api/title`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -219,10 +212,10 @@ function App() {
         })
         .catch((err) => console.error("제목 생성 실패:", err));
     } else {
-      // 기존 채팅방에 사용자 메시지 추가
+      // 기존 채팅방에 메시지 추가
       setChats((prev) =>
         prev.map((chat) =>
-          chat.id === currentChatId
+          chat.id === targetChatId
             ? { ...chat, messages: [...chat.messages, newUserMessage] }
             : chat,
         ),
@@ -252,47 +245,16 @@ function App() {
 
       if (!response.ok) throw new Error("채팅 요청 실패");
 
-      setIsChatLoading(false);
-      setIsStreaming(true);
+      const data = await response.json();
+      const aiMessage: Message = { role: "model", text: data.reply };
 
-      // 빈 모델 메시지 껍데기 추가
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === targetChatId
-            ? {
-                ...chat,
-                messages: [...chat.messages, { role: "model", text: "" }],
-              }
+            ? { ...chat, messages: [...chat.messages, aiMessage] }
             : chat,
         ),
       );
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let aiText = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          aiText += decoder.decode(value, { stream: true });
-
-          setChats((prev) =>
-            prev.map((chat) =>
-              chat.id === targetChatId
-                ? {
-                    ...chat,
-                    messages: chat.messages.map((msg, idx) =>
-                      idx === chat.messages.length - 1
-                        ? { ...msg, text: aiText }
-                        : msg,
-                    ),
-                  }
-                : chat,
-            ),
-          );
-        }
-      }
     } catch (error) {
       console.error(error);
       const errorMessage: Message = {
@@ -308,7 +270,6 @@ function App() {
       );
     } finally {
       setIsChatLoading(false);
-      setIsStreaming(false);
     }
   };
 
@@ -317,8 +278,7 @@ function App() {
       currentChat.messages.length === 0 ||
       isEvaluated ||
       isEvaluating ||
-      isChatLoading ||
-      isStreaming
+      isChatLoading
     )
       return;
 
@@ -326,7 +286,6 @@ function App() {
     setIsChatLoading(true);
 
     try {
-      // 이전 대화 내역 포맷팅 (평가 메시지는 제외)
       const history = currentChat.messages
         .filter((m) => m.role !== "evaluator")
         .map((msg) => ({
@@ -342,53 +301,22 @@ function App() {
 
       if (!response.ok) throw new Error("평가 요청 실패");
 
-      setIsChatLoading(false);
-      setIsStreaming(true);
+      const data = await response.json();
+      const evalMessage: Message = { role: "evaluator", text: data.reply };
 
       setChats((prev) =>
         prev.map((chat) =>
           chat.id === currentChatId
-            ? {
-                ...chat,
-                messages: [...chat.messages, { role: "evaluator", text: "" }],
-              }
+            ? { ...chat, messages: [...chat.messages, evalMessage] }
             : chat,
         ),
       );
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let evalText = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          evalText += decoder.decode(value, { stream: true });
-
-          setChats((prev) =>
-            prev.map((chat) =>
-              chat.id === currentChatId
-                ? {
-                    ...chat,
-                    messages: chat.messages.map((msg, idx) =>
-                      idx === chat.messages.length - 1
-                        ? { ...msg, text: evalText }
-                        : msg,
-                    ),
-                  }
-                : chat,
-            ),
-          );
-        }
-      }
     } catch (error) {
       console.error(error);
       alert("평가 중 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setIsEvaluating(false);
       setIsChatLoading(false);
-      setIsStreaming(false);
     }
   };
 
@@ -463,7 +391,10 @@ function App() {
     <div className="app-layout">
       {/* 모바일 오버레이 */}
       {isSidebarOpen && (
-        <div className="mobile-overlay" onClick={() => setIsSidebarOpen(false)}></div>
+        <div
+          className="mobile-overlay"
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
       )}
 
       {/* 왼쪽 사이드바 (Gemini 스타일) */}
@@ -555,7 +486,9 @@ function App() {
             </button>
             <div className="header-content">
               <h2>Reverse Tutoring.</h2>
-              <p>당신이 선생님이 되어, 백지상태의 AI를 완벽하게 이해시켜 보세요.</p>
+              <p>
+                당신이 선생님이 되어, 백지상태의 AI를 완벽하게 이해시켜 보세요.
+              </p>
             </div>
           </div>
           <button
@@ -620,13 +553,12 @@ function App() {
 
             {currentChat.messages.length > 0 &&
               !isEvaluated &&
-              (!isChatLoading || isEvaluating) &&
-              !isStreaming && (
+              (!isChatLoading || isEvaluating) && (
                 <div className="evaluate-wrapper">
                   <button
                     className="evaluate-btn"
                     onClick={handleEvaluate}
-                    disabled={isEvaluating || isStreaming}
+                    disabled={isEvaluating}
                   >
                     {isEvaluating
                       ? "⏳ 피드백 분석 중..."
@@ -635,7 +567,7 @@ function App() {
                 </div>
               )}
 
-            {isChatLoading && !isEvaluating && !isStreaming && (
+            {isChatLoading && !isEvaluating && (
               <div className="chat-message model">
                 <div className="message-bubble loading">생각 중... 🤔</div>
               </div>
@@ -663,12 +595,7 @@ function App() {
                     ? "학습이 종료되었습니다. 새 대화를 시작해주세요."
                     : "선생님, 오늘 배울 개념은 무엇인가요?"
                 }
-                disabled={
-                  isChatLoading ||
-                  status !== "success" ||
-                  isEvaluated ||
-                  isStreaming
-                }
+                disabled={isChatLoading || status !== "success" || isEvaluated}
               />
               <button
                 onClick={handleSendMessage}
@@ -676,8 +603,7 @@ function App() {
                   isChatLoading ||
                   !inputText.trim() ||
                   status !== "success" ||
-                  isEvaluated ||
-                  isStreaming
+                  isEvaluated
                 }
               >
                 전송
