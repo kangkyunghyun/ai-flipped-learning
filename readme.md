@@ -44,8 +44,8 @@
 
 ### 2. 프로젝트 클론 및 패키지 설치
 ```bash
-git clone https://github.com/kangkyunghyun/ai-flipped-learning.git
-cd ai-flipped-learning
+git clone https://github.com/Reverse-Tutoring/reverse-tutoring.git
+cd reverse-tutoring
 
 # 워크스페이스(Monorepo) 내의 모든 의존성 한 번에 설치
 npm install
