@@ -81,7 +81,8 @@ function App() {
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatHistoryRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // 현재 활성화된 채팅방 객체 찾기
   const currentChat: ChatSession = useMemo(() => {
@@ -157,11 +158,22 @@ function App() {
 
   // 메시지가 추가될 때마다 스크롤을 맨 아래로 부드럽게 이동
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
-    });
-  }, [currentChat.messages, isChatLoading]);
+    if (chatHistoryRef.current) {
+      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+    }
+  }, [currentChat.messages, isChatLoading, isEvaluating]);
+
+  // AI 응답이 끝나고 로딩이 해제되면 입력창에 자동 포커스
+  useEffect(() => {
+    if (
+      !isChatLoading &&
+      !isEvaluated &&
+      status === "success" &&
+      !editingChatId
+    ) {
+      inputRef.current?.focus();
+    }
+  }, [isChatLoading, isEvaluated, status, currentChatId, editingChatId]);
 
   const handleNewChat = () => {
     // 빈 방을 생성하지 않고 상태만 "새 대화"로 전환
@@ -501,7 +513,7 @@ function App() {
         </div>
 
         <div className="chat-container">
-          <div className="chat-history">
+          <div className="chat-history" ref={chatHistoryRef}>
             {currentChat.messages.length === 0 && (
               <div className="empty-chat">
                 <p>아래에서 학생의 성향을 선택하고 첫 인사를 건네보세요!</p>
@@ -572,7 +584,6 @@ function App() {
                 <div className="message-bubble loading">생각 중... 🤔</div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           <div className="input-wrapper">
@@ -586,6 +597,7 @@ function App() {
                 </div>
               )}
               <input
+                ref={inputRef}
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
