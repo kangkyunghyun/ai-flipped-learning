@@ -20,8 +20,8 @@ type ChatSession = {
   persona?: Persona;
 };
 
-const STORAGE_KEY_CHATS = "ai_tutor_chats";
-const STORAGE_KEY_THEME = "ai_tutor_theme";
+const STORAGE_KEY_CHATS = "reverse_tutoring_chats";
+const STORAGE_KEY_THEME = "reverse_tutoring_theme";
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:5001"
