@@ -82,6 +82,7 @@ function App() {
   const [editingTitle, setEditingTitle] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // 현재 활성화된 채팅방 객체 찾기
   const currentChat: ChatSession = useMemo(() => {
@@ -162,6 +163,13 @@ function App() {
       block: "end",
     });
   }, [currentChat.messages, isChatLoading]);
+
+  // AI 응답이 끝나고 로딩이 해제되면 입력창에 자동 포커스
+  useEffect(() => {
+    if (!isChatLoading && !isEvaluated && status === "success") {
+      inputRef.current?.focus();
+    }
+  }, [isChatLoading, isEvaluated, status]);
 
   const handleNewChat = () => {
     // 빈 방을 생성하지 않고 상태만 "새 대화"로 전환
@@ -586,6 +594,7 @@ function App() {
                 </div>
               )}
               <input
+                ref={inputRef}
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
