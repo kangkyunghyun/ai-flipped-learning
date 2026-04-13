@@ -165,10 +165,15 @@ function App() {
 
   // AI 응답이 끝나고 로딩이 해제되면 입력창에 자동 포커스
   useEffect(() => {
-    if (!isChatLoading && !isEvaluated && status === "success") {
+    if (
+      !isChatLoading &&
+      !isEvaluated &&
+      status === "success" &&
+      !editingChatId
+    ) {
       inputRef.current?.focus();
     }
-  }, [isChatLoading, isEvaluated, status]);
+  }, [isChatLoading, isEvaluated, status, currentChatId, editingChatId]);
 
   const handleNewChat = () => {
     // 빈 방을 생성하지 않고 상태만 "새 대화"로 전환
